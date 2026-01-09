@@ -16,10 +16,11 @@
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease; }
         .glass:hover { border-color: #22c55e; transform: translateY(-2px); }
         .vastago-highlight { color: #22c55e; text-shadow: 0 0 10px rgba(34, 197, 94, 0.4); }
+        .btn-activo { background: #22c55e; box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
     </style>
 </head>
 <body class="hero-bg">
-    <div class="max-w-4xl mx-auto px-4 py-12">
+    <div class="max-w-5xl mx-auto px-4 py-12">
         <header class="text-center mb-12">
             <h1 class="text-6xl font-black italic uppercase tracking-tighter leading-none" style="font-family: 'Oswald';">
                 LOS PIBES <span class="text-green-500">6+6</span>
@@ -27,32 +28,84 @@
             <p class="text-slate-400 tracking-[0.3em] uppercase text-[10px] mt-4 font-bold">Planilla: Torneo Los Pibes 6+6</p>
         </header>
 
-        <div class="flex justify-center mb-10 bg-white/5 p-1 rounded-2xl w-fit mx-auto border border-white/10">
-            <button onclick="cargarDatos('Apertura')" id="btn-Apertura" class="px-8 py-3 rounded-xl font-bold transition-all">Apertura</button>
-            <button onclick="cargarDatos('Clausura')" id="btn-Clausura" class="px-8 py-3 rounded-xl font-bold transition-all">Clausura</button>
+        <!-- Selector de Torneo -->
+        <div class="flex justify-center mb-6 bg-white/5 p-1 rounded-2xl w-fit mx-auto border border-white/10">
+            <button onclick="cambiarTorneo('Apertura')" id="btn-torneo-Apertura" class="px-8 py-3 rounded-xl font-bold transition-all">Apertura</button>
+            <button onclick="cambiarTorneo('Clausura')" id="btn-torneo-Clausura" class="px-8 py-3 rounded-xl font-bold transition-all">Clausura</button>
         </div>
 
-        <div id="partidos-container" class="space-y-4 text-center">
+        <!-- Selector de Vista -->
+        <div class="flex justify-center mb-10 bg-white/5 p-1 rounded-2xl w-fit mx-auto border border-white/10">
+            <button onclick="cambiarVista('fixture')" id="btn-vista-fixture" class="px-8 py-3 rounded-xl font-bold transition-all">Fixture</button>
+            <button onclick="cambiarVista('tabla')" id="btn-vista-tabla" class="px-8 py-3 rounded-xl font-bold transition-all">Tabla</button>
+        </div>
+
+        <!-- Contenedor de Fixture -->
+        <div id="fixture-container" class="space-y-4 text-center">
             <div class="animate-pulse text-slate-500 text-sm italic font-medium tracking-widest">Sincronizando con planilla...</div>
+        </div>
+
+        <!-- Contenedor de Tabla -->
+        <div id="tabla-container" class="hidden">
+            <div class="glass rounded-2xl overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead class="bg-white/5">
+                        <tr class="text-[10px] text-slate-400 uppercase tracking-wider">
+                            <th class="py-3 px-4 text-left">Pos</th>
+                            <th class="py-3 px-4 text-left">Equipo</th>
+                            <th class="py-3 px-2 text-center">PJ</th>
+                            <th class="py-3 px-2 text-center">PG</th>
+                            <th class="py-3 px-2 text-center">PE</th>
+                            <th class="py-3 px-2 text-center">PP</th>
+                            <th class="py-3 px-2 text-center">GF</th>
+                            <th class="py-3 px-2 text-center">GC</th>
+                            <th class="py-3 px-2 text-center">DIF</th>
+                            <th class="py-3 px-2 text-center font-bold">PTS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-body">
+                        <!-- Se llena dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
-        // URL LIMPIA SIN SIGNOS AL FINAL
         const API_URL = "https://script.google.com/macros/s/AKfycbw675NO52ucINehQlIo1xJcHfr7Jd-uAIi6dvhitcB0aApt_5bRBu_2UI_avNwWxdf2/exec";
+        
+        let torneoActual = 'Apertura';
+        let vistaActual = 'fixture';
+        let datosActuales = [];
 
-        async function cargarDatos(torneo) {
-            const container = document.getElementById('partidos-container');
+        function cambiarTorneo(torneo) {
+            torneoActual = torneo;
+            document.querySelectorAll('[id^="btn-torneo-"]').forEach(b => b.classList.remove('btn-activo'));
+            document.getElementById('btn-torneo-' + torneo).classList.add('btn-activo');
+            cargarDatos();
+        }
+
+        function cambiarVista(vista) {
+            vistaActual = vista;
+            document.querySelectorAll('[id^="btn-vista-"]').forEach(b => b.classList.remove('btn-activo'));
+            document.getElementById('btn-vista-' + vista).classList.add('btn-activo');
             
-            // UI de botones
-            document.querySelectorAll('button').forEach(b => b.classList.remove('bg-green-600', 'shadow-[0_0_20px_rgba(34,197,94,0.3)]'));
-            document.getElementById('btn-' + torneo).classList.add('bg-green-600', 'shadow-[0_0_20px_rgba(34,197,94,0.3)]');
+            if (vista === 'fixture') {
+                document.getElementById('fixture-container').classList.remove('hidden');
+                document.getElementById('tabla-container').classList.add('hidden');
+            } else {
+                document.getElementById('fixture-container').classList.add('hidden');
+                document.getElementById('tabla-container').classList.remove('hidden');
+                generarTabla();
+            }
+        }
 
+        async function cargarDatos() {
+            const container = document.getElementById('fixture-container');
             container.innerHTML = '<div class="py-10 text-slate-400 italic">Actualizando resultados...</div>';
             
             try {
-                // AQUÍ ESTÁ EL CAMBIO CLAVE: Solo un "?" y luego un "&"
-                const response = await fetch(API_URL + "?torneo=" + torneo + "&t=" + new Date().getTime());
+                const response = await fetch(API_URL + "?torneo=" + torneoActual + "&t=" + new Date().getTime());
                 const datos = await response.json();
                 
                 if (datos.error) {
@@ -60,47 +113,133 @@
                     return;
                 }
 
-                container.innerHTML = "";
-                datos.forEach(partido => {
-                    const esVastagoLocal = partido.Local && partido.Local.includes("Vástago");
-                    const esVastagoVisita = partido.Visitante && partido.Visitante.includes("Vástago");
-
-                    container.innerHTML += `
-                        <div class="glass rounded-2xl p-5 shadow-xl border-l-4 ${esVastagoLocal || esVastagoVisita ? 'border-green-500' : 'border-transparent'}">
-                            <div class="flex items-center justify-between">
-                                <div class="w-[35%]">
-                                    <div class="text-sm md:text-lg font-black uppercase tracking-tight ${esVastagoLocal ? 'vastago-highlight' : ''}">${partido.Local}</div>
-                                </div>
-
-                                <div class="w-[30%]">
-                                    <div class="text-[9px] text-slate-500 font-bold uppercase mb-2">${partido.Fecha}</div>
-                                    <div class="flex items-center justify-center gap-2">
-                                        <span class="text-3xl font-black">${partido.GolesL !== "" ? partido.GolesL : '-'}</span>
-                                        <span class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded text-slate-400 font-bold italic">VS</span>
-                                        <span class="text-3xl font-black">${partido.GolesV !== "" ? partido.GolesV : '-'}</span>
-                                    </div>
-                                </div>
-
-                                <div class="w-[35%]">
-                                    <div class="text-sm md:text-lg font-black uppercase tracking-tight ${esVastagoVisita ? 'vastago-highlight' : ''}">${partido.Visitante}</div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
+                datosActuales = datos;
+                mostrarFixture();
+                
+                if (vistaActual === 'tabla') {
+                    generarTabla();
+                }
             } catch (error) {
                 console.error(error);
                 container.innerHTML = `<div class="p-4 glass rounded-xl text-red-400">Error de conexión. Revisa la consola (F12).</div>`;
             }
         }
 
-        // Cargar por defecto
-        cargarDatos('Apertura');
+        function mostrarFixture() {
+            const container = document.getElementById('fixture-container');
+            container.innerHTML = "";
+            
+            datosActuales.forEach(partido => {
+                const esVastagoLocal = partido.Local && partido.Local.includes("Vástago");
+                const esVastagoVisita = partido.Visitante && partido.Visitante.includes("Vástago");
+                
+                const fecha = new Date(partido.Fecha);
+                const fechaFormateada = fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+                container.innerHTML += `
+                    <div class="glass rounded-2xl p-5 shadow-xl border-l-4 ${esVastagoLocal || esVastagoVisita ? 'border-green-500' : 'border-transparent'}">
+                        <div class="flex items-center justify-between">
+                            <div class="w-[35%]">
+                                <div class="text-sm md:text-lg font-black uppercase tracking-tight ${esVastagoLocal ? 'vastago-highlight' : ''}">${partido.Local}</div>
+                            </div>
+
+                            <div class="w-[30%]">
+                                <div class="text-[9px] text-slate-500 font-bold uppercase mb-2">${fechaFormateada}</div>
+                                <div class="flex items-center justify-center gap-2">
+                                    <span class="text-3xl font-black">${partido.GolesL !== "" ? partido.GolesL : '-'}</span>
+                                    <span class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded text-slate-400 font-bold italic">VS</span>
+                                    <span class="text-3xl font-black">${partido.GolesV !== "" ? partido.GolesV : '-'}</span>
+                                </div>
+                            </div>
+
+                            <div class="w-[35%]">
+                                <div class="text-sm md:text-lg font-black uppercase tracking-tight ${esVastagoVisita ? 'vastago-highlight' : ''}">${partido.Visitante}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function generarTabla() {
+            const equipos = {};
+            
+            // Calcular estadísticas
+            datosActuales.forEach(partido => {
+                if (partido.GolesL === "" || partido.GolesV === "") return;
+                
+                const local = partido.Local;
+                const visitante = partido.Visitante;
+                const golesL = parseInt(partido.GolesL);
+                const golesV = parseInt(partido.GolesV);
+                
+                // Inicializar equipos
+                if (!equipos[local]) equipos[local] = { equipo: local, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, pts: 0 };
+                if (!equipos[visitante]) equipos[visitante] = { equipo: visitante, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, pts: 0 };
+                
+                // Sumar estadísticas
+                equipos[local].pj++;
+                equipos[visitante].pj++;
+                equipos[local].gf += golesL;
+                equipos[local].gc += golesV;
+                equipos[visitante].gf += golesV;
+                equipos[visitante].gc += golesL;
+                
+                if (golesL > golesV) {
+                    equipos[local].pg++;
+                    equipos[local].pts += 3;
+                    equipos[visitante].pp++;
+                } else if (golesL < golesV) {
+                    equipos[visitante].pg++;
+                    equipos[visitante].pts += 3;
+                    equipos[local].pp++;
+                } else {
+                    equipos[local].pe++;
+                    equipos[visitante].pe++;
+                    equipos[local].pts++;
+                    equipos[visitante].pts++;
+                }
+            });
+            
+            // Ordenar por puntos, diferencia de gol, goles a favor
+            const tablaOrdenada = Object.values(equipos).sort((a, b) => {
+                const difA = a.gf - a.gc;
+                const difB = b.gf - b.gc;
+                
+                if (b.pts !== a.pts) return b.pts - a.pts;
+                if (difB !== difA) return difB - difA;
+                return b.gf - a.gf;
+            });
+            
+            // Mostrar tabla
+            const tbody = document.getElementById('tabla-body');
+            tbody.innerHTML = "";
+            
+            tablaOrdenada.forEach((equipo, index) => {
+                const esVastago = equipo.equipo.includes("Vástago");
+                const dif = equipo.gf - equipo.gc;
+                const difColor = dif > 0 ? 'text-green-400' : dif < 0 ? 'text-red-400' : 'text-slate-400';
+                
+                tbody.innerHTML += `
+                    <tr class="border-t border-white/5 hover:bg-white/5 transition-colors ${esVastago ? 'bg-green-500/5' : ''}">
+                        <td class="py-3 px-4 font-bold text-slate-400">${index + 1}</td>
+                        <td class="py-3 px-4 font-bold ${esVastago ? 'vastago-highlight' : ''}">${equipo.equipo}</td>
+                        <td class="py-3 px-2 text-center text-slate-400">${equipo.pj}</td>
+                        <td class="py-3 px-2 text-center text-green-400">${equipo.pg}</td>
+                        <td class="py-3 px-2 text-center text-slate-400">${equipo.pe}</td>
+                        <td class="py-3 px-2 text-center text-red-400">${equipo.pp}</td>
+                        <td class="py-3 px-2 text-center">${equipo.gf}</td>
+                        <td class="py-3 px-2 text-center">${equipo.gc}</td>
+                        <td class="py-3 px-2 text-center font-bold ${difColor}">${dif > 0 ? '+' : ''}${dif}</td>
+                        <td class="py-3 px-2 text-center font-black text-xl">${equipo.pts}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Inicializar
+        cambiarTorneo('Apertura');
+        cambiarVista('fixture');
     </script>
 </body>
 </html>
-
-
-
-
-
