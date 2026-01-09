@@ -52,7 +52,7 @@
             
             try {
                 // AQUÍ ESTÁ EL CAMBIO CLAVE: Solo un "?" y luego un "&"
-                const response = await fetch(`${API_URL}?torneo=${torneo}&cache=${new Date().getTime()}`);
+                const response = await fetch(`${API_URL}?torneo=${torneo}&t=${new Date().getTime()}`);
                 const datos = await response.json();
                 
                 if (datos.error) {
@@ -99,3 +99,4 @@
     </script>
 </body>
 </html>
+
