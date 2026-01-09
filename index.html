@@ -3,111 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Los Pibes 6+6 | Oficial</title>
+    <title>Los Pibes 6+6 | Vástago F.C.</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #020617; color: white; }
-        h1 { font-family: 'Oswald', sans-serif; }
-        
-        /* Fondo con imagen de estadio y degradado para que se lea el texto */
         .hero-bg {
-            background: linear-gradient(to bottom, rgba(2, 6, 23, 0.4), rgba(2, 6, 23, 1)), 
+            background: linear-gradient(to bottom, rgba(2, 6, 23, 0.5), rgba(2, 6, 23, 1)), 
                         url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2000&auto=format&fit=crop');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            min-height: 100vh;
+            background-size: cover; background-position: center; background-attachment: fixed; min-height: 100vh;
         }
-
-        .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.3s ease;
-        }
-        
-        .glass:hover {
-            transform: translateY(-5px);
-            border-color: #22c55e;
-        }
-
-        .vs-badge {
-            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-        }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .vastago-highlight { color: #22c55e; text-shadow: 0 0 10px rgba(34, 197, 94, 0.5); }
     </style>
 </head>
 <body class="hero-bg">
-
     <div class="max-w-4xl mx-auto px-4 py-12">
         <header class="text-center mb-12">
-            <div class="inline-block mb-4 p-4 rounded-full bg-green-500/10 border border-green-500/20">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v8m4-8v8M8 8v8M3 5h18M5 5V3a1 1 0 011-1h12a1 1 0 011 1v2m-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2m2 0V5m10 0v14" />
-                </svg>
-            </div>
-            <h1 class="text-6xl font-bold italic uppercase tracking-tighter text-white">
+            <h1 class="text-6xl font-black italic uppercase tracking-tighter leading-none" style="font-family: 'Oswald';">
                 LOS PIBES <span class="text-green-500">6+6</span>
             </h1>
-            <p class="text-slate-400 tracking-[0.3em] uppercase text-sm mt-2">Temporada 2026 | Vástago F.C. Edition</p>
+            <p class="text-slate-400 tracking-[0.3em] uppercase text-xs mt-4">Temporada Oficial 2026</p>
         </header>
 
         <div class="flex justify-center mb-12 bg-white/5 p-1 rounded-2xl w-fit mx-auto border border-white/10">
-            <button onclick="cargarDatos('Apertura')" class="px-8 py-3 rounded-xl font-bold transition-all hover:bg-white/10 active:scale-95 focus:bg-green-600">Apertura</button>
-            <button onclick="cargarDatos('Clausura')" class="px-8 py-3 rounded-xl font-bold transition-all hover:bg-white/10 active:scale-95 focus:bg-green-600">Clausura</button>
+            <button onclick="cargarDatos('Apertura')" id="btn-Apertura" class="px-8 py-3 rounded-xl font-bold transition-all">Apertura</button>
+            <button onclick="cargarDatos('Clausura')" id="btn-Clausura" class="px-8 py-3 rounded-xl font-bold transition-all">Clausura</button>
         </div>
 
-        <div id="partidos-container" class="space-y-6">
-            <div class="text-center text-slate-500">Conectando con el estadio...</div>
+        <div id="partidos-container" class="space-y-4">
+            <div class="text-center text-slate-500 animate-pulse">Cargando estadio...</div>
         </div>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbw9oVf3NxV4mqCYD2XJdch7c8kHLl4Z8pgE-YDi4p2rQHlalYjxJZQySj0ZW4MVZHf7/exec";
+        // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT
+        const API_URL = "https://script.google.com/macros/s/AKfycbw7ArbpGMfjLVCkO89lVtDnDG95Mrm5E10UVi9rnMiZAHFizwwAQw-iK-mwo-5CgZK4/exec";
 
         async function cargarDatos(torneo) {
             const container = document.getElementById('partidos-container');
-            container.innerHTML = '<div class="text-center animate-pulse">Actualizando marcadores...</div>';
+            
+            // Estilo de botones
+            document.querySelectorAll('button').forEach(b => b.classList.remove('bg-green-600', 'shadow-lg'));
+            document.getElementById('btn-' + torneo).classList.add('bg-green-600', 'shadow-lg');
+
+            container.innerHTML = '<div class="text-center py-10 text-slate-400">Actualizando fixture...</div>';
             
             try {
                 const response = await fetch(`${API_URL}?torneo=${torneo}`);
                 const datos = await response.json();
                 
+                if (datos.error) {
+                    container.innerHTML = `<div class="text-center text-red-400 p-4 glass rounded-xl">${datos.error}</div>`;
+                    return;
+                }
+
                 container.innerHTML = "";
                 datos.forEach(partido => {
                     const esVastagoLocal = partido.Local.includes("Vástago");
                     const esVastagoVisita = partido.Visitante.includes("Vástago");
 
                     container.innerHTML += `
-                        <div class="glass rounded-3xl p-6 shadow-2xl overflow-hidden relative">
-                            <div class="flex flex-row items-center justify-between relative z-10">
+                        <div class="glass rounded-2xl p-6 shadow-xl border-l-4 ${esVastagoLocal || esVastagoVisita ? 'border-green-500' : 'border-transparent'}">
+                            <div class="flex items-center justify-between">
                                 <div class="w-1/3 text-center">
-                                    <div class="text-lg md:text-xl font-bold ${esVastagoLocal ? 'text-green-400' : 'text-white'}">${partido.Local}</div>
-                                    <div class="text-[10px] text-slate-500 uppercase mt-1">Local</div>
+                                    <div class="text-lg font-black ${esVastagoLocal ? 'vastago-highlight' : ''}">${partido.Local}</div>
                                 </div>
 
-                                <div class="w-1/3 flex flex-col items-center">
-                                    <div class="text-xs text-slate-400 mb-2 font-medium">${partido.Fecha}</div>
-                                    <div class="flex items-center gap-4">
-                                        <span class="text-4xl font-black">${partido.GolesL !== "" ? partido.GolesL : '-'}</span>
-                                        <span class="vs-badge px-3 py-1 rounded text-[10px] font-black italic">VS</span>
-                                        <span class="text-4xl font-black">${partido.GolesV !== "" ? partido.GolesV : '-'}</span>
+                                <div class="w-1/3 text-center">
+                                    <div class="text-[10px] text-slate-500 font-bold uppercase mb-1">${partido.Fecha}</div>
+                                    <div class="flex items-center justify-center gap-3">
+                                        <span class="text-3xl font-black">${partido.GolesL !== "" ? partido.GolesL : '-'}</span>
+                                        <span class="text-xs bg-white/10 px-2 py-1 rounded text-slate-400 font-black italic">VS</span>
+                                        <span class="text-3xl font-black">${partido.GolesV !== "" ? partido.GolesV : '-'}</span>
                                     </div>
                                 </div>
 
                                 <div class="w-1/3 text-center">
-                                    <div class="text-lg md:text-xl font-bold ${esVastagoVisita ? 'text-green-400' : 'text-white'}">${partido.Visitante}</div>
-                                    <div class="text-[10px] text-slate-500 uppercase mt-1">Visitante</div>
+                                    <div class="text-lg font-black ${esVastagoVisita ? 'vastago-highlight' : ''}">${partido.Visitante}</div>
                                 </div>
                             </div>
                         </div>
                     `;
                 });
             } catch (error) {
-                container.innerHTML = `<div class="bg-red-500/20 text-red-400 p-4 rounded-xl text-center border border-red-500/50">Error de conexión. Verifica que el Apps Script esté publicado para "Cualquiera".</div>`;
+                container.innerHTML = `<div class="text-center text-red-400 p-4 glass rounded-xl">Error al cargar datos. Revisa la URL y los permisos.</div>`;
             }
         }
 
+        // Carga inicial
         cargarDatos('Apertura');
     </script>
 </body>
