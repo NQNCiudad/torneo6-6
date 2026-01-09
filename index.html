@@ -7,30 +7,30 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-    body { font-family: 'Inter', sans-serif; background-color: #020617; color: white; }
-    .hero-bg {
-        background: linear-gradient(to bottom, rgba(2, 6, 23, 0.6), rgba(2, 6, 23, 1)), 
-                    url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2000&auto=format&fit=crop');
-        background-size: cover; 
-        background-position: left center; 
-        background-attachment: fixed; 
-        min-height: 100vh;
-    }
-    .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease; }
-    .glass:hover { border-color: #22c55e; transform: translateY(-2px); }
-    .vastago-highlight { color: #22c55e; text-shadow: 0 0 10px rgba(34, 197, 94, 0.4); }
-    .btn-activo { background: #22c55e; box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
-    .escudo-equipo { width: 48px; height: 48px; object-fit: contain; }
-    
-    /* Mobile optimization */
-    @media (max-width: 640px) {
+        body { font-family: 'Inter', sans-serif; background-color: #020617; color: white; }
         .hero-bg {
-            background-position: 30% center;
-            background-attachment: scroll;
+            background: linear-gradient(to bottom, rgba(2, 6, 23, 0.6), rgba(2, 6, 23, 1)), 
+                        url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2000&auto=format&fit=crop');
+            background-size: cover; 
+            background-position: left center; 
+            background-attachment: fixed; 
+            min-height: 100vh;
         }
-        .escudo-equipo { width: 36px; height: 36px; }
-    }
-</style>
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease; }
+        .glass:hover { border-color: #22c55e; transform: translateY(-2px); }
+        .vastago-highlight { color: #22c55e; text-shadow: 0 0 10px rgba(34, 197, 94, 0.4); }
+        .btn-activo { background: #22c55e; box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
+        .escudo-equipo { width: 56px; height: 56px; object-fit: contain; }
+        
+        /* Mobile optimization */
+        @media (max-width: 640px) {
+            .hero-bg {
+                background-position: 30% center;
+                background-attachment: scroll;
+            }
+            .escudo-equipo { width: 42px; height: 42px; }
+        }
+    </style>
 </head>
 <body class="hero-bg">
     <div class="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
@@ -38,7 +38,7 @@
             <h1 class="text-4xl sm:text-6xl font-black italic uppercase tracking-tighter leading-none" style="font-family: 'Oswald';">
                 LOS PIBES <span class="text-green-500">6+6</span>
             </h1>
-            <p class="text-slate-400 tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[8px] sm:text-[10px] mt-3 sm:mt-4 font-bold">Planilla: Torneo Los Pibes 6+6</p>
+            <p class="text-slate-400 tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[8px] sm:text-[10px] mt-3 sm:mt-4 font-bold">T E M P O R A D A  2 0 2 6 | Torneo Los Pibes 6+6</p>
         </header>
 
         <!-- Selector de Torneo -->
@@ -55,7 +55,7 @@
         </div>
 
         <!-- Contenedor de Fixture/Próxima Fecha -->
-        <div id="partidos-container" class="space-y-3 sm:space-y-4 text-center">
+        <div id="partidos-container" class="space-y-4 sm:space-y-5 text-center">
             <div class="animate-pulse text-slate-500 text-xs sm:text-sm italic font-medium tracking-widest">Sincronizando con planilla...</div>
         </div>
 
@@ -87,8 +87,6 @@
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw675NO52ucINehQlIo1xJcHfr7Jd-uAIi6dvhitcB0aApt_5bRBu_2UI_avNwWxdf2/exec";
-        
-        // ⚠️ REEMPLAZA ESTA URL CON LA RUTA DE TU ESCUDO EN GITHUB
         const ESCUDO_VASTAGO = "https://nqnciudad.github.io/torneo6-6/images/escudo-vastago.png";
         
         let torneoActual = 'Apertura';
@@ -120,14 +118,14 @@
 
         async function cargarDatos() {
             const container = document.getElementById('partidos-container');
-            container.innerHTML = '<div class="py-10 text-slate-400 italic text-xs sm:text-sm">Actualizando resultados...</div>';
+            container.innerHTML = '<div class="py-10 text-slate-400 italic text-sm">Actualizando resultados...</div>';
             
             try {
                 const response = await fetch(API_URL + "?torneo=" + torneoActual + "&t=" + new Date().getTime());
                 const datos = await response.json();
                 
                 if (datos.error) {
-                    container.innerHTML = `<div class="p-4 glass rounded-xl text-red-400 font-medium text-xs sm:text-sm">${datos.error}</div>`;
+                    container.innerHTML = `<div class="p-4 glass rounded-xl text-red-400 font-medium text-sm">${datos.error}</div>`;
                     return;
                 }
 
@@ -140,7 +138,7 @@
                 }
             } catch (error) {
                 console.error(error);
-                container.innerHTML = `<div class="p-4 glass rounded-xl text-red-400 text-xs sm:text-sm">Error de conexión. Revisa la consola (F12).</div>`;
+                container.innerHTML = `<div class="p-4 glass rounded-xl text-red-400 text-sm">Error de conexión. Revisa la consola (F12).</div>`;
             }
         }
 
@@ -150,20 +148,15 @@
             
             let partidosMostrar = datosActuales;
             
-            // Si es "Próxima Fecha", filtrar solo la próxima fecha
             if (vistaActual === 'proxima') {
-                // Encontrar partidos sin resultado
                 const partidosPendientes = datosActuales.filter(p => p.GolesL === "" || p.GolesV === "");
                 
                 if (partidosPendientes.length === 0) {
-                    container.innerHTML = '<div class="glass rounded-2xl p-6 text-center text-slate-400 italic">¡Torneo finalizado! No hay más fechas pendientes.</div>';
+                    container.innerHTML = '<div class="glass rounded-2xl p-6 text-center text-slate-400 italic text-lg">¡Torneo finalizado! No hay más fechas pendientes.</div>';
                     return;
                 }
                 
-                // Obtener la fecha más próxima (la primera sin resultado)
                 const proximaFecha = new Date(partidosPendientes[0].Fecha);
-                
-                // Filtrar solo los partidos de esa fecha
                 partidosMostrar = partidosPendientes.filter(p => {
                     const fechaPartido = new Date(p.Fecha);
                     return fechaPartido.getTime() === proximaFecha.getTime();
@@ -177,35 +170,33 @@
                 const fecha = new Date(partido.Fecha);
                 const fechaFormateada = fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-                // HTML para el equipo local
                 const equipoLocalHTML = esVastagoLocal 
-                    ? `<div class="flex items-center gap-2 justify-start">
+                    ? `<div class="flex items-center gap-3 justify-start">
                         <img src="${ESCUDO_VASTAGO}" alt="Vástago F.C." class="escudo-equipo">
-                        <div class="text-xs sm:text-lg font-black uppercase tracking-tight vastago-highlight">${partido.Local}</div>
+                        <div class="text-base sm:text-2xl font-black uppercase tracking-tight vastago-highlight">${partido.Local}</div>
                        </div>`
-                    : `<div class="text-xs sm:text-lg font-black uppercase tracking-tight">${partido.Local}</div>`;
+                    : `<div class="text-base sm:text-2xl font-black uppercase tracking-tight">${partido.Local}</div>`;
 
-                // HTML para el equipo visitante
                 const equipoVisitaHTML = esVastagoVisita 
-                    ? `<div class="flex items-center gap-2 justify-end">
-                        <div class="text-xs sm:text-lg font-black uppercase tracking-tight vastago-highlight">${partido.Visitante}</div>
+                    ? `<div class="flex items-center gap-3 justify-end">
+                        <div class="text-base sm:text-2xl font-black uppercase tracking-tight vastago-highlight">${partido.Visitante}</div>
                         <img src="${ESCUDO_VASTAGO}" alt="Vástago F.C." class="escudo-equipo">
                        </div>`
-                    : `<div class="text-xs sm:text-lg font-black uppercase tracking-tight">${partido.Visitante}</div>`;
+                    : `<div class="text-base sm:text-2xl font-black uppercase tracking-tight">${partido.Visitante}</div>`;
 
                 container.innerHTML += `
-                    <div class="glass rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-xl border-l-4 ${esVastagoLocal || esVastagoVisita ? 'border-green-500' : 'border-transparent'}">
-                        <div class="flex items-center justify-between gap-2">
+                    <div class="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl border-l-4 ${esVastagoLocal || esVastagoVisita ? 'border-green-500' : 'border-transparent'}">
+                        <div class="flex items-center justify-between gap-3">
                             <div class="w-[35%]">
                                 ${equipoLocalHTML}
                             </div>
 
                             <div class="w-[30%]">
-                                <div class="text-xs sm:text-sm text-slate-400 font-bold uppercase mb-2">${fechaFormateada}</div>
-                                <div class="flex items-center justify-center gap-2">
-                                    <span class="text-2xl sm:text-3xl font-black">${partido.GolesL !== "" ? partido.GolesL : '-'}</span>
-                                    <span class="text-xs sm:text-sm bg-white/10 px-2 py-1 rounded text-slate-300 font-bold">VS</span>
-                                    <span class="text-2xl sm:text-3xl font-black">${partido.GolesV !== "" ? partido.GolesV : '-'}</span>
+                                <div class="text-sm sm:text-base text-slate-400 font-bold uppercase mb-2 sm:mb-3">${fechaFormateada}</div>
+                                <div class="flex items-center justify-center gap-2 sm:gap-3">
+                                    <span class="text-3xl sm:text-5xl font-black">${partido.GolesL !== "" ? partido.GolesL : '-'}</span>
+                                    <span class="text-sm sm:text-base bg-white/10 px-2 sm:px-3 py-1 sm:py-1.5 rounded text-slate-300 font-bold">VS</span>
+                                    <span class="text-3xl sm:text-5xl font-black">${partido.GolesV !== "" ? partido.GolesV : '-'}</span>
                                 </div>
                             </div>
 
@@ -221,7 +212,6 @@
         function generarTabla() {
             const equipos = {};
             
-            // Calcular estadísticas
             datosActuales.forEach(partido => {
                 if (partido.GolesL === "" || partido.GolesV === "") return;
                 
@@ -230,11 +220,9 @@
                 const golesL = parseInt(partido.GolesL);
                 const golesV = parseInt(partido.GolesV);
                 
-                // Inicializar equipos
                 if (!equipos[local]) equipos[local] = { equipo: local, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, pts: 0 };
                 if (!equipos[visitante]) equipos[visitante] = { equipo: visitante, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, pts: 0 };
                 
-                // Sumar estadísticas
                 equipos[local].pj++;
                 equipos[visitante].pj++;
                 equipos[local].gf += golesL;
@@ -258,7 +246,6 @@
                 }
             });
             
-            // Ordenar por puntos, diferencia de gol, goles a favor
             const tablaOrdenada = Object.values(equipos).sort((a, b) => {
                 const difA = a.gf - a.gc;
                 const difB = b.gf - b.gc;
@@ -268,7 +255,6 @@
                 return b.gf - a.gf;
             });
             
-            // Mostrar tabla
             const tbody = document.getElementById('tabla-body');
             tbody.innerHTML = "";
             
@@ -301,10 +287,8 @@
             });
         }
 
-        // Inicializar
         cambiarTorneo('Apertura');
         cambiarVista('fixture');
     </script>
 </body>
 </html>
-
