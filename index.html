@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Los Pibes 6+6 | Vástago F.C.</title>
+    <title>Los Pibes 6+6 | Oficial</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #020617; color: white; }
         .hero-bg {
-            background: linear-gradient(to bottom, rgba(2, 6, 23, 0.5), rgba(2, 6, 23, 1)), 
+            background: linear-gradient(to bottom, rgba(2, 6, 23, 0.6), rgba(2, 6, 23, 1)), 
                         url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2000&auto=format&fit=crop');
             background-size: cover; background-position: center; background-attachment: fixed; min-height: 100vh;
         }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .vastago-highlight { color: #22c55e; text-shadow: 0 0 10px rgba(34, 197, 94, 0.5); }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease; }
+        .glass:hover { border-color: #22c55e; transform: translateY(-2px); }
+        .vastago-highlight { color: #22c55e; text-shadow: 0 0 10px rgba(34, 197, 94, 0.4); }
     </style>
 </head>
 <body class="hero-bg">
@@ -23,79 +24,78 @@
             <h1 class="text-6xl font-black italic uppercase tracking-tighter leading-none" style="font-family: 'Oswald';">
                 LOS PIBES <span class="text-green-500">6+6</span>
             </h1>
-            <p class="text-slate-400 tracking-[0.3em] uppercase text-xs mt-4">Temporada Oficial 2026</p>
+            <p class="text-slate-400 tracking-[0.3em] uppercase text-[10px] mt-4 font-bold">Planilla: Torneo Los Pibes 6+6</p>
         </header>
 
-        <div class="flex justify-center mb-12 bg-white/5 p-1 rounded-2xl w-fit mx-auto border border-white/10">
+        <div class="flex justify-center mb-10 bg-white/5 p-1 rounded-2xl w-fit mx-auto border border-white/10">
             <button onclick="cargarDatos('Apertura')" id="btn-Apertura" class="px-8 py-3 rounded-xl font-bold transition-all">Apertura</button>
             <button onclick="cargarDatos('Clausura')" id="btn-Clausura" class="px-8 py-3 rounded-xl font-bold transition-all">Clausura</button>
         </div>
 
-        <div id="partidos-container" class="space-y-4">
-            <div class="text-center text-slate-500 animate-pulse">Cargando estadio...</div>
+        <div id="partidos-container" class="space-y-4 text-center">
+            <div class="animate-pulse text-slate-500 text-sm italic font-medium tracking-widest">Sincronizando con planilla...</div>
         </div>
     </div>
 
     <script>
-        // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT
-        const API_URL = "https://script.google.com/macros/s/AKfycbxyfav8LEjyAkeW0045KpAnyrK318-LJb309TZCF-g_X_JGTM6vxtxetppz19JbVjW7/exec?v=2";
+        // URL LIMPIA SIN SIGNOS AL FINAL
+        const API_URL = "https://script.google.com/macros/s/AKfycbxyfav8LEjyAkeW0045KpAnyrK318-LJb309TZCF-g_X_JGTM6vxtxetppz19JbVjW7/exec";
 
         async function cargarDatos(torneo) {
             const container = document.getElementById('partidos-container');
             
-            // Estilo de botones
-            document.querySelectorAll('button').forEach(b => b.classList.remove('bg-green-600', 'shadow-lg'));
-            document.getElementById('btn-' + torneo).classList.add('bg-green-600', 'shadow-lg');
+            // UI de botones
+            document.querySelectorAll('button').forEach(b => b.classList.remove('bg-green-600', 'shadow-[0_0_20px_rgba(34,197,94,0.3)]'));
+            document.getElementById('btn-' + torneo).classList.add('bg-green-600', 'shadow-[0_0_20px_rgba(34,197,94,0.3)]');
 
-            container.innerHTML = '<div class="text-center py-10 text-slate-400">Actualizando fixture...</div>';
+            container.innerHTML = '<div class="py-10 text-slate-400 italic">Actualizando resultados...</div>';
             
             try {
-                cconst response = await fetch(`${API_URL}?torneo=${torneo}&nocache=${new Date().getTime()}`);
+                // AQUÍ ESTÁ EL CAMBIO CLAVE: Solo un "?" y luego un "&"
+                const response = await fetch(`${API_URL}?torneo=${torneo}&cache=${new Date().getTime()}`);
                 const datos = await response.json();
                 
                 if (datos.error) {
-                    container.innerHTML = `<div class="text-center text-red-400 p-4 glass rounded-xl">${datos.error}</div>`;
+                    container.innerHTML = `<div class="p-4 glass rounded-xl text-red-400 font-medium">${datos.error}</div>`;
                     return;
                 }
 
                 container.innerHTML = "";
                 datos.forEach(partido => {
-                    const esVastagoLocal = partido.Local.includes("Vástago");
-                    const esVastagoVisita = partido.Visitante.includes("Vástago");
+                    const esVastagoLocal = partido.Local && partido.Local.includes("Vástago");
+                    const esVastagoVisita = partido.Visitante && partido.Visitante.includes("Vástago");
 
                     container.innerHTML += `
-                        <div class="glass rounded-2xl p-6 shadow-xl border-l-4 ${esVastagoLocal || esVastagoVisita ? 'border-green-500' : 'border-transparent'}">
+                        <div class="glass rounded-2xl p-5 shadow-xl border-l-4 ${esVastagoLocal || esVastagoVisita ? 'border-green-500' : 'border-transparent'}">
                             <div class="flex items-center justify-between">
-                                <div class="w-1/3 text-center">
-                                    <div class="text-lg font-black ${esVastagoLocal ? 'vastago-highlight' : ''}">${partido.Local}</div>
+                                <div class="w-[35%]">
+                                    <div class="text-sm md:text-lg font-black uppercase tracking-tight ${esVastagoLocal ? 'vastago-highlight' : ''}">${partido.Local}</div>
                                 </div>
 
-                                <div class="w-1/3 text-center">
-                                    <div class="text-[10px] text-slate-500 font-bold uppercase mb-1">${partido.Fecha}</div>
-                                    <div class="flex items-center justify-center gap-3">
+                                <div class="w-[30%]">
+                                    <div class="text-[9px] text-slate-500 font-bold uppercase mb-2">${partido.Fecha}</div>
+                                    <div class="flex items-center justify-center gap-2">
                                         <span class="text-3xl font-black">${partido.GolesL !== "" ? partido.GolesL : '-'}</span>
-                                        <span class="text-xs bg-white/10 px-2 py-1 rounded text-slate-400 font-black italic">VS</span>
+                                        <span class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded text-slate-400 font-bold italic">VS</span>
                                         <span class="text-3xl font-black">${partido.GolesV !== "" ? partido.GolesV : '-'}</span>
                                     </div>
                                 </div>
 
-                                <div class="w-1/3 text-center">
-                                    <div class="text-lg font-black ${esVastagoVisita ? 'vastago-highlight' : ''}">${partido.Visitante}</div>
+                                <div class="w-[35%]">
+                                    <div class="text-sm md:text-lg font-black uppercase tracking-tight ${esVastagoVisita ? 'vastago-highlight' : ''}">${partido.Visitante}</div>
                                 </div>
                             </div>
                         </div>
                     `;
                 });
             } catch (error) {
-                container.innerHTML = `<div class="text-center text-red-400 p-4 glass rounded-xl">Error al cargar datos. Revisa la URL y los permisos.</div>`;
+                console.error(error);
+                container.innerHTML = `<div class="p-4 glass rounded-xl text-red-400">Error de conexión. Revisa la consola (F12).</div>`;
             }
         }
 
-        // Carga inicial
+        // Cargar por defecto
         cargarDatos('Apertura');
     </script>
 </body>
 </html>
-
-
-
