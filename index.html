@@ -39,7 +39,7 @@
 
     <script>
         // URL LIMPIA SIN SIGNOS AL FINAL
-        const API_URL = "https://script.google.com/macros/s/AKfycbxyfav8LEjyAkeW0045KpAnyrK318-LJb309TZCF-g_X_JGTM6vxtxetppz19JbVjW7/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbwJJF0qcT0NLSd-GEM9IK5LsLDiLbsYLk4FP-vAUCLck4xSqMbi1_W4keGVjjdFTpOJ/exec";
 
         async function cargarDatos(torneo) {
             const container = document.getElementById('partidos-container');
@@ -52,7 +52,7 @@
             
             try {
                 // AQUÍ ESTÁ EL CAMBIO CLAVE: Solo un "?" y luego un "&"
-                const response = await fetch(`${API_URL}?torneo=${torneo}&t=${new Date().getTime()}`);
+                const response = await fetch(API_URL + "?torneo=" + torneo + "&t=" + new Date().getTime());
                 const datos = await response.json();
                 
                 if (datos.error) {
@@ -99,4 +99,5 @@
     </script>
 </body>
 </html>
+
 
