@@ -7,16 +7,27 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #020617; color: white; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #020617; 
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
         .hero-bg {
-            background: linear-gradient(to bottom, rgba(2, 6, 23, 0.6), rgba(2, 6, 23, 1)), 
+            background: linear-gradient(to bottom, rgba(2, 6, 23, 0.6), rgba(2, 6, 23, 0.95)), 
                         url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2000&auto=format&fit=crop');
             background-size: cover; 
-            background-position: left center; 
+            background-position: center center; 
             background-attachment: fixed; 
             min-height: 100vh;
         }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease; }
+        .glass { 
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            transition: all 0.3s ease; 
+        }
         .glass:hover { border-color: #22c55e; transform: translateY(-2px); }
         .vastago-highlight { color: #22c55e; text-shadow: 0 0 10px rgba(34, 197, 94, 0.4); }
         .btn-activo { background: #22c55e; box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
@@ -25,37 +36,48 @@
         /* Mobile optimization */
         @media (max-width: 640px) {
             .hero-bg {
-                background-position: 30% center;
+                background: linear-gradient(to bottom, rgba(2, 6, 23, 0.7), rgba(2, 6, 23, 0.95)), 
+                            url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2000&auto=format&fit=crop');
+                background-size: cover;
+                background-position: 20% center;
                 background-attachment: scroll;
             }
-            .escudo-equipo { width: 42px; height: 42px; }
+            .escudo-equipo { width: 40px; height: 40px; }
+        }
+        
+        /* Landscape mobile */
+        @media (max-width: 900px) and (orientation: landscape) {
+            .hero-bg {
+                background-position: center 30%;
+            }
         }
     </style>
 </head>
 <body class="hero-bg">
-    <div class="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
-        <header class="text-center mb-8 sm:mb-12">
-            <h1 class="text-4xl sm:text-6xl font-black italic uppercase tracking-tighter leading-none" style="font-family: 'Oswald';">
+    <div class="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-12">
+        <header class="text-center mb-6 sm:mb-12">
+            <h1 class="text-3xl sm:text-6xl font-black italic uppercase tracking-tighter leading-none" style="font-family: 'Oswald';">
                 LOS PIBES <span class="text-green-500">6+6</span>
             </h1>
-            <p class="text-slate-400 tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[8px] sm:text-[10px] mt-3 sm:mt-4 font-bold">T E M P O R A D A  2 0 2 6 | Torneo Los Pibes 6+6</p>
+            <p class="text-slate-400 tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[8px] sm:text-[10px] mt-2 sm:mt-4 font-bold">T E M P O R A D A  2 0 2 6 | Torneo Los Pibes 6+6</p>
         </header>
 
         <!-- Selector de Torneo -->
-        <div class="flex justify-center mb-4 sm:mb-6 bg-white/5 p-1 rounded-2xl w-fit mx-auto border border-white/10">
-            <button onclick="cambiarTorneo('Apertura')" id="btn-torneo-Apertura" class="px-4 sm:px-8 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Apertura</button>
-            <button onclick="cambiarTorneo('Clausura')" id="btn-torneo-Clausura" class="px-4 sm:px-8 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Clausura</button>
+        <div class="flex justify-center mb-3 sm:mb-6 bg-white/5 p-1 rounded-2xl w-fit mx-auto border border-white/10">
+            <button onclick="cambiarTorneo('Apertura')" id="btn-torneo-Apertura" class="px-6 sm:px-8 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Apertura</button>
+            <button onclick="cambiarTorneo('Clausura')" id="btn-torneo-Clausura" class="px-6 sm:px-8 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Clausura</button>
         </div>
 
         <!-- Selector de Vista Principal -->
-        <div class="flex justify-center mb-6 sm:mb-10 bg-white/5 p-1 rounded-2xl w-fit mx-auto border border-white/10">
-            <button onclick="cambiarVista('fixture')" id="btn-vista-fixture" class="px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Fixture</button>
-            <button onclick="cambiarVista('proxima')" id="btn-vista-proxima" class="px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Próxima Fecha</button>
-            <button onclick="cambiarVista('tabla')" id="btn-vista-tabla" class="px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Tabla</button>
+        <div class="flex flex-wrap justify-center gap-1 sm:gap-2 mb-4 sm:mb-10 bg-white/5 p-1 rounded-2xl w-fit mx-auto border border-white/10 max-w-[95vw]">
+            <button onclick="cambiarVista('proxima')" id="btn-vista-proxima" class="px-2 sm:px-5 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-base transition-all whitespace-nowrap">Próxima Fecha</button>
+            <button onclick="cambiarVista('tabla')" id="btn-vista-tabla" class="px-3 sm:px-5 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-base transition-all">Tabla</button>
+            <button onclick="cambiarVista('fixture')" id="btn-vista-fixture" class="px-3 sm:px-5 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-base transition-all">Fixture</button>
+            <button onclick="cambiarVista('goleadores')" id="btn-vista-goleadores" class="px-2 sm:px-5 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-base transition-all">Goleadores</button>
         </div>
 
         <!-- Contenedor de Fixture/Próxima Fecha -->
-        <div id="partidos-container" class="space-y-4 sm:space-y-5 text-center">
+        <div id="partidos-container" class="space-y-3 sm:space-y-5 text-center">
             <div class="animate-pulse text-slate-500 text-xs sm:text-sm italic font-medium tracking-widest">Sincronizando con planilla...</div>
         </div>
 
@@ -64,20 +86,39 @@
             <div class="glass rounded-xl sm:rounded-2xl overflow-x-auto">
                 <table class="w-full text-sm sm:text-base">
                     <thead class="bg-white/5">
-                        <tr class="text-xs sm:text-sm text-slate-400 uppercase tracking-wider">
-                            <th class="py-3 sm:py-4 px-3 sm:px-4 text-left">Pos</th>
-                            <th class="py-3 sm:py-4 px-3 sm:px-4 text-left">Equipo</th>
-                            <th class="py-3 sm:py-4 px-2 sm:px-3 text-center">PJ</th>
-                            <th class="py-3 sm:py-4 px-2 sm:px-3 text-center">PG</th>
-                            <th class="py-3 sm:py-4 px-2 sm:px-3 text-center">PE</th>
-                            <th class="py-3 sm:py-4 px-2 sm:px-3 text-center">PP</th>
-                            <th class="py-3 sm:py-4 px-2 sm:px-3 text-center">GF</th>
-                            <th class="py-3 sm:py-4 px-2 sm:px-3 text-center">GC</th>
-                            <th class="py-3 sm:py-4 px-2 sm:px-3 text-center">DIF</th>
-                            <th class="py-3 sm:py-4 px-2 sm:px-3 text-center font-bold">PTS</th>
+                        <tr class="text-[10px] sm:text-sm text-slate-400 uppercase tracking-wider">
+                            <th class="py-2 sm:py-4 px-2 sm:px-4 text-left">Pos</th>
+                            <th class="py-2 sm:py-4 px-2 sm:px-4 text-left">Equipo</th>
+                            <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">PJ</th>
+                            <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">PG</th>
+                            <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">PE</th>
+                            <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">PP</th>
+                            <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">GF</th>
+                            <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">GC</th>
+                            <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">DIF</th>
+                            <th class="py-2 sm:py-4 px-1 sm:px-3 text-center font-bold">PTS</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-body">
+                        <!-- Se llena dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Contenedor de Goleadores -->
+        <div id="goleadores-container" class="hidden">
+            <div class="glass rounded-xl sm:rounded-2xl overflow-x-auto">
+                <table class="w-full text-sm sm:text-base">
+                    <thead class="bg-white/5">
+                        <tr class="text-[10px] sm:text-sm text-slate-400 uppercase tracking-wider">
+                            <th class="py-2 sm:py-4 px-2 sm:px-4 text-left">Pos</th>
+                            <th class="py-2 sm:py-4 px-2 sm:px-4 text-left">Jugador</th>
+                            <th class="py-2 sm:py-4 px-2 sm:px-4 text-left">Equipo</th>
+                            <th class="py-2 sm:py-4 px-2 sm:px-4 text-center font-bold">⚽ Goles</th>
+                        </tr>
+                    </thead>
+                    <tbody id="goleadores-body">
                         <!-- Se llena dinámicamente -->
                     </tbody>
                 </table>
@@ -87,10 +128,10 @@
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw675NO52ucINehQlIo1xJcHfr7Jd-uAIi6dvhitcB0aApt_5bRBu_2UI_avNwWxdf2/exec";
-        const ESCUDO_VASTAGO = "https://nqnciudad.github.io/torneo6-6/images/escudo-vastago.png";
+        const ESCUDO_VASTAGO = "https://nqnciudad.github.io/torneo6-6/imagen/escudo-vastago.png";
         
         let torneoActual = 'Apertura';
-        let vistaActual = 'fixture';
+        let vistaActual = 'proxima';
         let datosActuales = [];
 
         function cambiarTorneo(torneo) {
@@ -105,13 +146,19 @@
             document.querySelectorAll('[id^="btn-vista-"]').forEach(b => b.classList.remove('btn-activo'));
             document.getElementById('btn-vista-' + vista).classList.add('btn-activo');
             
+            // Ocultar todos los contenedores
+            document.getElementById('partidos-container').classList.add('hidden');
+            document.getElementById('tabla-container').classList.add('hidden');
+            document.getElementById('goleadores-container').classList.add('hidden');
+            
             if (vista === 'tabla') {
-                document.getElementById('partidos-container').classList.add('hidden');
                 document.getElementById('tabla-container').classList.remove('hidden');
                 generarTabla();
+            } else if (vista === 'goleadores') {
+                document.getElementById('goleadores-container').classList.remove('hidden');
+                cargarGoleadores();
             } else {
                 document.getElementById('partidos-container').classList.remove('hidden');
-                document.getElementById('tabla-container').classList.add('hidden');
                 mostrarPartidos();
             }
         }
@@ -133,12 +180,58 @@
                 
                 if (vistaActual === 'tabla') {
                     generarTabla();
+                } else if (vistaActual === 'goleadores') {
+                    cargarGoleadores();
                 } else {
                     mostrarPartidos();
                 }
             } catch (error) {
                 console.error(error);
                 container.innerHTML = `<div class="p-4 glass rounded-xl text-red-400 text-sm">Error de conexión. Revisa la consola (F12).</div>`;
+            }
+        }
+
+        async function cargarGoleadores() {
+            const container = document.getElementById('goleadores-body');
+            container.innerHTML = '<tr><td colspan="4" class="py-10 text-center text-slate-400 italic text-sm">Cargando goleadores...</td></tr>';
+            
+            try {
+                const response = await fetch(API_URL + "?accion=goleadores&t=" + new Date().getTime());
+                const goleadores = await response.json();
+                
+                if (goleadores.error) {
+                    container.innerHTML = `<tr><td colspan="4" class="p-4 text-red-400 font-medium text-sm text-center">${goleadores.error}</td></tr>`;
+                    return;
+                }
+
+                // Ordenar por goles (mayor a menor)
+                goleadores.sort((a, b) => b.Goles - a.Goles);
+                
+                container.innerHTML = "";
+                
+                goleadores.forEach((goleador, index) => {
+                    const esVastago = goleador.Equipo && goleador.Equipo.includes("Vástago");
+                    
+                    const equipoHTML = esVastago
+                        ? `<div class="flex items-center gap-2">
+                            <img src="${ESCUDO_VASTAGO}" alt="Vástago F.C." class="escudo-equipo">
+                            <span class="vastago-highlight">${goleador.Equipo}</span>
+                           </div>`
+                        : goleador.Equipo;
+                    
+                    container.innerHTML += `
+                        <tr class="border-t border-white/5 hover:bg-white/5 transition-colors ${esVastago ? 'bg-green-500/5' : ''}">
+                            <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-slate-400 text-xs sm:text-base">${index + 1}</td>
+                            <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-xs sm:text-lg ${esVastago ? 'vastago-highlight' : ''}">${goleador.Jugador}</td>
+                            <td class="py-2 sm:py-4 px-2 sm:px-4 text-xs sm:text-base">${equipoHTML}</td>
+                            <td class="py-2 sm:py-4 px-2 sm:px-4 text-center font-black text-lg sm:text-2xl text-green-400">${goleador.Goles}</td>
+                        </tr>
+                    `;
+                });
+                
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = '<tr><td colspan="4" class="p-4 text-red-400 text-sm text-center">Error al cargar goleadores</td></tr>';
             }
         }
 
@@ -152,7 +245,7 @@
                 const partidosPendientes = datosActuales.filter(p => p.GolesL === "" || p.GolesV === "");
                 
                 if (partidosPendientes.length === 0) {
-                    container.innerHTML = '<div class="glass rounded-2xl p-6 text-center text-slate-400 italic text-lg">¡Torneo finalizado! No hay más fechas pendientes.</div>';
+                    container.innerHTML = '<div class="glass rounded-2xl p-6 text-center text-slate-400 italic text-base sm:text-lg">¡Torneo finalizado! No hay más fechas pendientes.</div>';
                     return;
                 }
                 
@@ -171,32 +264,32 @@
                 const fechaFormateada = fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
                 const equipoLocalHTML = esVastagoLocal 
-                    ? `<div class="flex items-center gap-3 justify-start">
+                    ? `<div class="flex items-center gap-2 sm:gap-3 justify-start">
                         <img src="${ESCUDO_VASTAGO}" alt="Vástago F.C." class="escudo-equipo">
-                        <div class="text-base sm:text-2xl font-black uppercase tracking-tight vastago-highlight">${partido.Local}</div>
+                        <div class="text-sm sm:text-2xl font-black uppercase tracking-tight vastago-highlight">${partido.Local}</div>
                        </div>`
-                    : `<div class="text-base sm:text-2xl font-black uppercase tracking-tight">${partido.Local}</div>`;
+                    : `<div class="text-sm sm:text-2xl font-black uppercase tracking-tight">${partido.Local}</div>`;
 
                 const equipoVisitaHTML = esVastagoVisita 
-                    ? `<div class="flex items-center gap-3 justify-end">
-                        <div class="text-base sm:text-2xl font-black uppercase tracking-tight vastago-highlight">${partido.Visitante}</div>
+                    ? `<div class="flex items-center gap-2 sm:gap-3 justify-end">
+                        <div class="text-sm sm:text-2xl font-black uppercase tracking-tight vastago-highlight">${partido.Visitante}</div>
                         <img src="${ESCUDO_VASTAGO}" alt="Vástago F.C." class="escudo-equipo">
                        </div>`
-                    : `<div class="text-base sm:text-2xl font-black uppercase tracking-tight">${partido.Visitante}</div>`;
+                    : `<div class="text-sm sm:text-2xl font-black uppercase tracking-tight">${partido.Visitante}</div>`;
 
                 container.innerHTML += `
-                    <div class="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl border-l-4 ${esVastagoLocal || esVastagoVisita ? 'border-green-500' : 'border-transparent'}">
-                        <div class="flex items-center justify-between gap-3">
+                    <div class="glass rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-xl border-l-4 ${esVastagoLocal || esVastagoVisita ? 'border-green-500' : 'border-transparent'}">
+                        <div class="flex items-center justify-between gap-2 sm:gap-3">
                             <div class="w-[35%]">
                                 ${equipoLocalHTML}
                             </div>
 
                             <div class="w-[30%]">
-                                <div class="text-sm sm:text-base text-slate-400 font-bold uppercase mb-2 sm:mb-3">${fechaFormateada}</div>
-                                <div class="flex items-center justify-center gap-2 sm:gap-3">
-                                    <span class="text-3xl sm:text-5xl font-black">${partido.GolesL !== "" ? partido.GolesL : '-'}</span>
-                                    <span class="text-sm sm:text-base bg-white/10 px-2 sm:px-3 py-1 sm:py-1.5 rounded text-slate-300 font-bold">VS</span>
-                                    <span class="text-3xl sm:text-5xl font-black">${partido.GolesV !== "" ? partido.GolesV : '-'}</span>
+                                <div class="text-[10px] sm:text-base text-slate-400 font-bold uppercase mb-1 sm:mb-3">${fechaFormateada}</div>
+                                <div class="flex items-center justify-center gap-1 sm:gap-3">
+                                    <span class="text-2xl sm:text-5xl font-black">${partido.GolesL !== "" ? partido.GolesL : '-'}</span>
+                                    <span class="text-[10px] sm:text-base bg-white/10 px-1.5 sm:px-3 py-0.5 sm:py-1.5 rounded text-slate-300 font-bold">VS</span>
+                                    <span class="text-2xl sm:text-5xl font-black">${partido.GolesV !== "" ? partido.GolesV : '-'}</span>
                                 </div>
                             </div>
 
@@ -272,23 +365,23 @@
                 
                 tbody.innerHTML += `
                     <tr class="border-t border-white/5 hover:bg-white/5 transition-colors ${esVastago ? 'bg-green-500/5' : ''}">
-                        <td class="py-3 sm:py-4 px-3 sm:px-4 font-bold text-slate-400 text-sm sm:text-base">${index + 1}</td>
-                        <td class="py-3 sm:py-4 px-3 sm:px-4 font-bold text-sm sm:text-lg">${equipoHTML}</td>
-                        <td class="py-3 sm:py-4 px-2 sm:px-3 text-center text-slate-400 text-sm sm:text-base">${equipo.pj}</td>
-                        <td class="py-3 sm:py-4 px-2 sm:px-3 text-center text-green-400 text-sm sm:text-base">${equipo.pg}</td>
-                        <td class="py-3 sm:py-4 px-2 sm:px-3 text-center text-slate-400 text-sm sm:text-base">${equipo.pe}</td>
-                        <td class="py-3 sm:py-4 px-2 sm:px-3 text-center text-red-400 text-sm sm:text-base">${equipo.pp}</td>
-                        <td class="py-3 sm:py-4 px-2 sm:px-3 text-center text-sm sm:text-base">${equipo.gf}</td>
-                        <td class="py-3 sm:py-4 px-2 sm:px-3 text-center text-sm sm:text-base">${equipo.gc}</td>
-                        <td class="py-3 sm:py-4 px-2 sm:px-3 text-center font-bold text-sm sm:text-base ${difColor}">${dif > 0 ? '+' : ''}${dif}</td>
-                        <td class="py-3 sm:py-4 px-2 sm:px-3 text-center font-black text-xl sm:text-2xl">${equipo.pts}</td>
+                        <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-slate-400 text-xs sm:text-base">${index + 1}</td>
+                        <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-xs sm:text-lg">${equipoHTML}</td>
+                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-slate-400 text-xs sm:text-base">${equipo.pj}</td>
+                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-green-400 text-xs sm:text-base">${equipo.pg}</td>
+                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-slate-400 text-xs sm:text-base">${equipo.pe}</td>
+                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-red-400 text-xs sm:text-base">${equipo.pp}</td>
+                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-xs sm:text-base">${equipo.gf}</td>
+                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-xs sm:text-base">${equipo.gc}</td>
+                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center font-bold text-xs sm:text-base ${difColor}">${dif > 0 ? '+' : ''}${dif}</td>
+                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center font-black text-lg sm:text-2xl">${equipo.pts}</td>
                     </tr>
                 `;
             });
         }
 
         cambiarTorneo('Apertura');
-        cambiarVista('fixture');
+        cambiarVista('proxima');
     </script>
 </body>
 </html>
