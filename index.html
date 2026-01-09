@@ -20,6 +20,7 @@
         .glass:hover { border-color: #22c55e; transform: translateY(-2px); }
         .vastago-highlight { color: #22c55e; text-shadow: 0 0 10px rgba(34, 197, 94, 0.4); }
         .btn-activo { background: #22c55e; box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
+        .escudo-equipo { width: 32px; height: 32px; object-fit: contain; }
         
         /* Mobile optimization */
         @media (max-width: 640px) {
@@ -27,6 +28,7 @@
                 background-position: 30% center;
                 background-attachment: scroll;
             }
+            .escudo-equipo { width: 24px; height: 24px; }
         }
     </style>
 </head>
@@ -45,14 +47,15 @@
             <button onclick="cambiarTorneo('Clausura')" id="btn-torneo-Clausura" class="px-4 sm:px-8 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Clausura</button>
         </div>
 
-        <!-- Selector de Vista -->
+        <!-- Selector de Vista Principal -->
         <div class="flex justify-center mb-6 sm:mb-10 bg-white/5 p-1 rounded-2xl w-fit mx-auto border border-white/10">
-            <button onclick="cambiarVista('fixture')" id="btn-vista-fixture" class="px-4 sm:px-8 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Fixture</button>
-            <button onclick="cambiarVista('tabla')" id="btn-vista-tabla" class="px-4 sm:px-8 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Tabla</button>
+            <button onclick="cambiarVista('fixture')" id="btn-vista-fixture" class="px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Fixture</button>
+            <button onclick="cambiarVista('proxima')" id="btn-vista-proxima" class="px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Próxima Fecha</button>
+            <button onclick="cambiarVista('tabla')" id="btn-vista-tabla" class="px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Tabla</button>
         </div>
 
-        <!-- Contenedor de Fixture -->
-        <div id="fixture-container" class="space-y-3 sm:space-y-4 text-center">
+        <!-- Contenedor de Fixture/Próxima Fecha -->
+        <div id="partidos-container" class="space-y-3 sm:space-y-4 text-center">
             <div class="animate-pulse text-slate-500 text-xs sm:text-sm italic font-medium tracking-widest">Sincronizando con planilla...</div>
         </div>
 
@@ -85,6 +88,9 @@
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw675NO52ucINehQlIo1xJcHfr7Jd-uAIi6dvhitcB0aApt_5bRBu_2UI_avNwWxdf2/exec";
         
+        // ⚠️ REEMPLAZA ESTA URL CON LA RUTA DE TU ESCUDO EN GITHUB
+        const ESCUDO_VASTAGO = "https://nqnciudad.github.io/torneo6-6/images/escudo-vastago.png";
+        
         let torneoActual = 'Apertura';
         let vistaActual = 'fixture';
         let datosActuales = [];
@@ -101,18 +107,19 @@
             document.querySelectorAll('[id^="btn-vista-"]').forEach(b => b.classList.remove('btn-activo'));
             document.getElementById('btn-vista-' + vista).classList.add('btn-activo');
             
-            if (vista === 'fixture') {
-                document.getElementById('fixture-container').classList.remove('hidden');
-                document.getElementById('tabla-container').classList.add('hidden');
-            } else {
-                document.getElementById('fixture-container').classList.add('hidden');
+            if (vista === 'tabla') {
+                document.getElementById('partidos-container').classList.add('hidden');
                 document.getElementById('tabla-container').classList.remove('hidden');
                 generarTabla();
+            } else {
+                document.getElementById('partidos-container').classList.remove('hidden');
+                document.getElementById('tabla-container').classList.add('hidden');
+                mostrarPartidos();
             }
         }
 
         async function cargarDatos() {
-            const container = document.getElementById('fixture-container');
+            const container = document.getElementById('partidos-container');
             container.innerHTML = '<div class="py-10 text-slate-400 italic text-xs sm:text-sm">Actualizando resultados...</div>';
             
             try {
@@ -125,10 +132,11 @@
                 }
 
                 datosActuales = datos;
-                mostrarFixture();
                 
                 if (vistaActual === 'tabla') {
                     generarTabla();
+                } else {
+                    mostrarPartidos();
                 }
             } catch (error) {
                 console.error(error);
@@ -136,35 +144,73 @@
             }
         }
 
-        function mostrarFixture() {
-            const container = document.getElementById('fixture-container');
+        function mostrarPartidos() {
+            const container = document.getElementById('partidos-container');
             container.innerHTML = "";
             
-            datosActuales.forEach(partido => {
+            let partidosMostrar = datosActuales;
+            
+            // Si es "Próxima Fecha", filtrar solo la próxima fecha
+            if (vistaActual === 'proxima') {
+                // Encontrar partidos sin resultado
+                const partidosPendientes = datosActuales.filter(p => p.GolesL === "" || p.GolesV === "");
+                
+                if (partidosPendientes.length === 0) {
+                    container.innerHTML = '<div class="glass rounded-2xl p-6 text-center text-slate-400 italic">¡Torneo finalizado! No hay más fechas pendientes.</div>';
+                    return;
+                }
+                
+                // Obtener la fecha más próxima (la primera sin resultado)
+                const proximaFecha = new Date(partidosPendientes[0].Fecha);
+                
+                // Filtrar solo los partidos de esa fecha
+                partidosMostrar = partidosPendientes.filter(p => {
+                    const fechaPartido = new Date(p.Fecha);
+                    return fechaPartido.getTime() === proximaFecha.getTime();
+                });
+            }
+            
+            partidosMostrar.forEach(partido => {
                 const esVastagoLocal = partido.Local && partido.Local.includes("Vástago");
                 const esVastagoVisita = partido.Visitante && partido.Visitante.includes("Vástago");
                 
                 const fecha = new Date(partido.Fecha);
                 const fechaFormateada = fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
+                // HTML para el equipo local
+                const equipoLocalHTML = esVastagoLocal 
+                    ? `<div class="flex items-center gap-2 justify-start">
+                        <img src="${ESCUDO_VASTAGO}" alt="Vástago F.C." class="escudo-equipo">
+                        <div class="text-xs sm:text-lg font-black uppercase tracking-tight vastago-highlight">${partido.Local}</div>
+                       </div>`
+                    : `<div class="text-xs sm:text-lg font-black uppercase tracking-tight">${partido.Local}</div>`;
+
+                // HTML para el equipo visitante
+                const equipoVisitaHTML = esVastagoVisita 
+                    ? `<div class="flex items-center gap-2 justify-end">
+                        <div class="text-xs sm:text-lg font-black uppercase tracking-tight vastago-highlight">${partido.Visitante}</div>
+                        <img src="${ESCUDO_VASTAGO}" alt="Vástago F.C." class="escudo-equipo">
+                       </div>`
+                    : `<div class="text-xs sm:text-lg font-black uppercase tracking-tight">${partido.Visitante}</div>`;
+
                 container.innerHTML += `
                     <div class="glass rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-xl border-l-4 ${esVastagoLocal || esVastagoVisita ? 'border-green-500' : 'border-transparent'}">
                         <div class="flex items-center justify-between gap-2">
                             <div class="w-[35%]">
-                                <div class="text-xs sm:text-lg font-black uppercase tracking-tight ${esVastagoLocal ? 'vastago-highlight' : ''}">${partido.Local}</div>
+                                ${equipoLocalHTML}
                             </div>
 
                             <div class="w-[30%]">
-                                <div class="text-[8px] sm:text-[9px] text-slate-500 font-bold uppercase mb-1 sm:mb-2">${fechaFormateada}</div>
-                                <div class="flex items-center justify-center gap-1 sm:gap-2">
-                                    <span class="text-xl sm:text-3xl font-black">${partido.GolesL !== "" ? partido.GolesL : '-'}</span>
-                                    <span class="text-[8px] sm:text-[9px] bg-white/10 px-1 sm:px-1.5 py-0.5 rounded text-slate-400 font-bold italic">VS</span>
-                                    <span class="text-xl sm:text-3xl font-black">${partido.GolesV !== "" ? partido.GolesV : '-'}</span>
+                                <div class="text-xs sm:text-sm text-slate-400 font-bold uppercase mb-2">${fechaFormateada}</div>
+                                <div class="flex items-center justify-center gap-2">
+                                    <span class="text-2xl sm:text-3xl font-black">${partido.GolesL !== "" ? partido.GolesL : '-'}</span>
+                                    <span class="text-xs sm:text-sm bg-white/10 px-2 py-1 rounded text-slate-300 font-bold">VS</span>
+                                    <span class="text-2xl sm:text-3xl font-black">${partido.GolesV !== "" ? partido.GolesV : '-'}</span>
                                 </div>
                             </div>
 
                             <div class="w-[35%]">
-                                <div class="text-xs sm:text-lg font-black uppercase tracking-tight ${esVastagoVisita ? 'vastago-highlight' : ''}">${partido.Visitante}</div>
+                                ${equipoVisitaHTML}
                             </div>
                         </div>
                     </div>
@@ -231,10 +277,17 @@
                 const dif = equipo.gf - equipo.gc;
                 const difColor = dif > 0 ? 'text-green-400' : dif < 0 ? 'text-red-400' : 'text-slate-400';
                 
+                const equipoHTML = esVastago
+                    ? `<div class="flex items-center gap-2">
+                        <img src="${ESCUDO_VASTAGO}" alt="Vástago F.C." class="escudo-equipo">
+                        <span class="vastago-highlight">${equipo.equipo}</span>
+                       </div>`
+                    : equipo.equipo;
+                
                 tbody.innerHTML += `
                     <tr class="border-t border-white/5 hover:bg-white/5 transition-colors ${esVastago ? 'bg-green-500/5' : ''}">
                         <td class="py-2 sm:py-3 px-2 sm:px-4 font-bold text-slate-400 text-xs sm:text-sm">${index + 1}</td>
-                        <td class="py-2 sm:py-3 px-2 sm:px-4 font-bold text-xs sm:text-sm ${esVastago ? 'vastago-highlight' : ''}">${equipo.equipo}</td>
+                        <td class="py-2 sm:py-3 px-2 sm:px-4 font-bold text-xs sm:text-sm">${equipoHTML}</td>
                         <td class="py-2 sm:py-3 px-1 sm:px-2 text-center text-slate-400 text-xs sm:text-sm">${equipo.pj}</td>
                         <td class="py-2 sm:py-3 px-1 sm:px-2 text-center text-green-400 text-xs sm:text-sm">${equipo.pg}</td>
                         <td class="py-2 sm:py-3 px-1 sm:px-2 text-center text-slate-400 text-xs sm:text-sm">${equipo.pe}</td>
