@@ -50,7 +50,7 @@
             container.innerHTML = '<div class="text-center py-10 text-slate-400">Actualizando fixture...</div>';
             
             try {
-                const response = await fetch(`${API_URL}?torneo=${torneo}`);
+                cconst response = await fetch(`${API_URL}?torneo=${torneo}&nocache=${new Date().getTime()}`);
                 const datos = await response.json();
                 
                 if (datos.error) {
@@ -96,5 +96,6 @@
     </script>
 </body>
 </html>
+
 
 
