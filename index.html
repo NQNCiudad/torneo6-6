@@ -62,19 +62,19 @@
         <!-- Contenedor de Tabla -->
         <div id="tabla-container" class="hidden">
             <div class="glass rounded-xl sm:rounded-2xl overflow-x-auto">
-                <table class="w-full text-xs sm:text-sm">
+                <table class="w-full text-sm sm:text-base">
                     <thead class="bg-white/5">
-                        <tr class="text-[8px] sm:text-[10px] text-slate-400 uppercase tracking-wider">
-                            <th class="py-2 sm:py-3 px-2 sm:px-4 text-left">Pos</th>
-                            <th class="py-2 sm:py-3 px-2 sm:px-4 text-left">Equipo</th>
-                            <th class="py-2 sm:py-3 px-1 sm:px-2 text-center">PJ</th>
-                            <th class="py-2 sm:py-3 px-1 sm:px-2 text-center">PG</th>
-                            <th class="py-2 sm:py-3 px-1 sm:px-2 text-center">PE</th>
-                            <th class="py-2 sm:py-3 px-1 sm:px-2 text-center">PP</th>
-                            <th class="py-2 sm:py-3 px-1 sm:px-2 text-center">GF</th>
-                            <th class="py-2 sm:py-3 px-1 sm:px-2 text-center">GC</th>
-                            <th class="py-2 sm:py-3 px-1 sm:px-2 text-center">DIF</th>
-                            <th class="py-2 sm:py-3 px-1 sm:px-2 text-center font-bold">PTS</th>
+                        <tr class="text-xs sm:text-sm text-slate-400 uppercase tracking-wider">
+                            <th class="py-3 sm:py-4 px-3 sm:px-4 text-left">Pos</th>
+                            <th class="py-3 sm:py-4 px-3 sm:px-4 text-left">Equipo</th>
+                            <th class="py-3 sm:py-4 px-2 sm:px-3 text-center">PJ</th>
+                            <th class="py-3 sm:py-4 px-2 sm:px-3 text-center">PG</th>
+                            <th class="py-3 sm:py-4 px-2 sm:px-3 text-center">PE</th>
+                            <th class="py-3 sm:py-4 px-2 sm:px-3 text-center">PP</th>
+                            <th class="py-3 sm:py-4 px-2 sm:px-3 text-center">GF</th>
+                            <th class="py-3 sm:py-4 px-2 sm:px-3 text-center">GC</th>
+                            <th class="py-3 sm:py-4 px-2 sm:px-3 text-center">DIF</th>
+                            <th class="py-3 sm:py-4 px-2 sm:px-3 text-center font-bold">PTS</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-body">
@@ -272,16 +272,16 @@
                 
                 tbody.innerHTML += `
                     <tr class="border-t border-white/5 hover:bg-white/5 transition-colors ${esVastago ? 'bg-green-500/5' : ''}">
-                        <td class="py-2 sm:py-3 px-2 sm:px-4 font-bold text-slate-400 text-xs sm:text-sm">${index + 1}</td>
-                        <td class="py-2 sm:py-3 px-2 sm:px-4 font-bold text-xs sm:text-sm">${equipoHTML}</td>
-                        <td class="py-2 sm:py-3 px-1 sm:px-2 text-center text-slate-400 text-xs sm:text-sm">${equipo.pj}</td>
-                        <td class="py-2 sm:py-3 px-1 sm:px-2 text-center text-green-400 text-xs sm:text-sm">${equipo.pg}</td>
-                        <td class="py-2 sm:py-3 px-1 sm:px-2 text-center text-slate-400 text-xs sm:text-sm">${equipo.pe}</td>
-                        <td class="py-2 sm:py-3 px-1 sm:px-2 text-center text-red-400 text-xs sm:text-sm">${equipo.pp}</td>
-                        <td class="py-2 sm:py-3 px-1 sm:px-2 text-center text-xs sm:text-sm">${equipo.gf}</td>
-                        <td class="py-2 sm:py-3 px-1 sm:px-2 text-center text-xs sm:text-sm">${equipo.gc}</td>
-                        <td class="py-2 sm:py-3 px-1 sm:px-2 text-center font-bold text-xs sm:text-sm ${difColor}">${dif > 0 ? '+' : ''}${dif}</td>
-                        <td class="py-2 sm:py-3 px-1 sm:px-2 text-center font-black text-base sm:text-xl">${equipo.pts}</td>
+                        <td class="py-3 sm:py-4 px-3 sm:px-4 font-bold text-slate-400 text-sm sm:text-base">${index + 1}</td>
+                        <td class="py-3 sm:py-4 px-3 sm:px-4 font-bold text-sm sm:text-lg">${equipoHTML}</td>
+                        <td class="py-3 sm:py-4 px-2 sm:px-3 text-center text-slate-400 text-sm sm:text-base">${equipo.pj}</td>
+                        <td class="py-3 sm:py-4 px-2 sm:px-3 text-center text-green-400 text-sm sm:text-base">${equipo.pg}</td>
+                        <td class="py-3 sm:py-4 px-2 sm:px-3 text-center text-slate-400 text-sm sm:text-base">${equipo.pe}</td>
+                        <td class="py-3 sm:py-4 px-2 sm:px-3 text-center text-red-400 text-sm sm:text-base">${equipo.pp}</td>
+                        <td class="py-3 sm:py-4 px-2 sm:px-3 text-center text-sm sm:text-base">${equipo.gf}</td>
+                        <td class="py-3 sm:py-4 px-2 sm:px-3 text-center text-sm sm:text-base">${equipo.gc}</td>
+                        <td class="py-3 sm:py-4 px-2 sm:px-3 text-center font-bold text-sm sm:text-base ${difColor}">${dif > 0 ? '+' : ''}${dif}</td>
+                        <td class="py-3 sm:py-4 px-2 sm:px-3 text-center font-black text-xl sm:text-2xl">${equipo.pts}</td>
                     </tr>
                 `;
             });
