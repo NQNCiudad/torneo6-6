@@ -30,6 +30,7 @@
         }
         .glass:hover { border-color: #22c55e; transform: translateY(-2px); }
         .vastago-highlight { color: #22c55e; text-shadow: 0 0 10px rgba(34, 197, 94, 0.4); }
+        .nacional-highlight { color: #3b82f6; text-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
         .btn-activo { background: #22c55e; box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
         .escudo-equipo { width: 56px; height: 56px; object-fit: contain; }
         
@@ -39,7 +40,7 @@
                 background: linear-gradient(to bottom, rgba(2, 6, 23, 0.7), rgba(2, 6, 23, 0.95)), 
                             url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2000&auto=format&fit=crop');
                 background-size: cover;
-                background-position: 20% center;
+                background-position: center 40%;
                 background-attachment: scroll;
             }
             .escudo-equipo { width: 40px; height: 40px; }
@@ -48,7 +49,14 @@
         /* Landscape mobile */
         @media (max-width: 900px) and (orientation: landscape) {
             .hero-bg {
-                background-position: center 30%;
+                background-position: center 35%;
+            }
+        }
+        
+        /* Tablets portrait */
+        @media (min-width: 641px) and (max-width: 1024px) and (orientation: portrait) {
+            .hero-bg {
+                background-position: center 45%;
             }
         }
     </style>
@@ -59,7 +67,7 @@
             <h1 class="text-3xl sm:text-6xl font-black italic uppercase tracking-tighter leading-none" style="font-family: 'Oswald';">
                 LOS PIBES <span class="text-green-500">6+6</span>
             </h1>
-            <p class="text-slate-400 tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[8px] sm:text-[10px] mt-2 sm:mt-4 font-bold">T E M P O R A D A  2 0 2 6 | Torneo Los Pibes 6+6</p>
+            <p class="text-slate-400 tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[8px] sm:text-[10px] mt-2 sm:mt-4 font-bold">TEMPORADA 2026 | Torneo Los Pibes 6+6</p>
         </header>
 
         <!-- Selector de Torneo -->
@@ -129,10 +137,20 @@
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw675NO52ucINehQlIo1xJcHfr7Jd-uAIi6dvhitcB0aApt_5bRBu_2UI_avNwWxdf2/exec";
         const ESCUDO_VASTAGO = "https://nqnciudad.github.io/torneo6-6/imagen/escudo-vastago.png";
+        const ESCUDO_NACIONAL = "https://nqnciudad.github.io/torneo6-6/imagen/escudo-nacional.png";
         
         let torneoActual = 'Apertura';
         let vistaActual = 'proxima';
         let datosActuales = [];
+
+        function obtenerInfoEquipo(nombreEquipo) {
+            if (nombreEquipo.includes("Vástago")) {
+                return { escudo: ESCUDO_VASTAGO, clase: "vastago-highlight", borderColor: "border-green-500", bgColor: "bg-green-500/5" };
+            } else if (nombreEquipo.includes("Nacional")) {
+                return { escudo: ESCUDO_NACIONAL, clase: "nacional-highlight", borderColor: "border-blue-500", bgColor: "bg-blue-500/5" };
+            }
+            return { escudo: null, clase: "", borderColor: "border-transparent", bgColor: "" };
+        }
 
         function cambiarTorneo(torneo) {
             torneoActual = torneo;
@@ -146,7 +164,6 @@
             document.querySelectorAll('[id^="btn-vista-"]').forEach(b => b.classList.remove('btn-activo'));
             document.getElementById('btn-vista-' + vista).classList.add('btn-activo');
             
-            // Ocultar todos los contenedores
             document.getElementById('partidos-container').classList.add('hidden');
             document.getElementById('tabla-container').classList.add('hidden');
             document.getElementById('goleadores-container').classList.add('hidden');
@@ -192,67 +209,61 @@
         }
 
         async function cargarGoleadores() {
-    const container = document.getElementById('goleadores-body');
-    container.innerHTML = '<tr><td colspan="4" class="py-10 text-center text-slate-400 italic text-sm">Cargando goleadores...</td></tr>';
-    
-    try {
-        const response = await fetch(API_URL + "?accion=goleadores&t=" + new Date().getTime());
-        const goleadores = await response.json();
-        
-        if (goleadores.error) {
-            container.innerHTML = `<tr><td colspan="4" class="p-4 text-red-400 font-medium text-sm text-center">${goleadores.error}</td></tr>`;
-            return;
-        }
+            const container = document.getElementById('goleadores-body');
+            container.innerHTML = '<tr><td colspan="4" class="py-10 text-center text-slate-400 italic text-sm">Cargando goleadores...</td></tr>';
+            
+            try {
+                const response = await fetch(API_URL + "?accion=goleadores&t=" + new Date().getTime());
+                const goleadores = await response.json();
+                
+                if (goleadores.error) {
+                    container.innerHTML = `<tr><td colspan="4" class="p-4 text-red-400 font-medium text-sm text-center">${goleadores.error}</td></tr>`;
+                    return;
+                }
 
-        // Agrupar goles por jugador
-        const jugadoresMap = {};
-        
-        goleadores.forEach(goleador => {
-            const jugador = goleador.Jugador;
-            const equipo = goleador.Equipo;
-            const goles = parseInt(goleador.Goles) || 0;
-            
-            if (!jugadoresMap[jugador]) {
-                jugadoresMap[jugador] = {
-                    Jugador: jugador,
-                    Equipo: equipo,
-                    Goles: 0
-                };
+                const jugadoresMap = {};
+                
+                goleadores.forEach(goleador => {
+                    const jugador = goleador.Jugador;
+                    const equipo = goleador.Equipo;
+                    const goles = parseInt(goleador.Goles) || 0;
+                    
+                    if (!jugadoresMap[jugador]) {
+                        jugadoresMap[jugador] = { Jugador: jugador, Equipo: equipo, Goles: 0 };
+                    }
+                    
+                    jugadoresMap[jugador].Goles += goles;
+                });
+                
+                const goleadoresAgrupados = Object.values(jugadoresMap).sort((a, b) => b.Goles - a.Goles);
+                
+                container.innerHTML = "";
+                
+                goleadoresAgrupados.forEach((goleador, index) => {
+                    const info = obtenerInfoEquipo(goleador.Equipo);
+                    
+                    const equipoHTML = info.escudo
+                        ? `<div class="flex items-center gap-2">
+                            <img src="${info.escudo}" alt="${goleador.Equipo}" class="escudo-equipo">
+                            <span class="${info.clase}">${goleador.Equipo}</span>
+                           </div>`
+                        : goleador.Equipo;
+                    
+                    container.innerHTML += `
+                        <tr class="border-t border-white/5 hover:bg-white/5 transition-colors ${info.bgColor}">
+                            <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-slate-400 text-xs sm:text-base">${index + 1}</td>
+                            <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-xs sm:text-lg ${info.clase}">${goleador.Jugador}</td>
+                            <td class="py-2 sm:py-4 px-2 sm:px-4 text-xs sm:text-base">${equipoHTML}</td>
+                            <td class="py-2 sm:py-4 px-2 sm:px-4 text-center font-black text-lg sm:text-2xl text-green-400">${goleador.Goles}</td>
+                        </tr>
+                    `;
+                });
+                
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = '<tr><td colspan="4" class="p-4 text-red-400 text-sm text-center">Error al cargar goleadores</td></tr>';
             }
-            
-            jugadoresMap[jugador].Goles += goles;
-        });
-        
-        // Convertir a array y ordenar por goles
-        const goleadoresAgrupados = Object.values(jugadoresMap).sort((a, b) => b.Goles - a.Goles);
-        
-        container.innerHTML = "";
-        
-        goleadoresAgrupados.forEach((goleador, index) => {
-            const esVastago = goleador.Equipo && goleador.Equipo.includes("Vástago");
-            
-            const equipoHTML = esVastago
-                ? `<div class="flex items-center gap-2">
-                    <img src="${ESCUDO_VASTAGO}" alt="Vástago F.C." class="escudo-equipo">
-                    <span class="vastago-highlight">${goleador.Equipo}</span>
-                   </div>`
-                : goleador.Equipo;
-            
-            container.innerHTML += `
-                <tr class="border-t border-white/5 hover:bg-white/5 transition-colors ${esVastago ? 'bg-green-500/5' : ''}">
-                    <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-slate-400 text-xs sm:text-base">${index + 1}</td>
-                    <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-xs sm:text-lg ${esVastago ? 'vastago-highlight' : ''}">${goleador.Jugador}</td>
-                    <td class="py-2 sm:py-4 px-2 sm:px-4 text-xs sm:text-base">${equipoHTML}</td>
-                    <td class="py-2 sm:py-4 px-2 sm:px-4 text-center font-black text-lg sm:text-2xl text-green-400">${goleador.Goles}</td>
-                </tr>
-            `;
-        });
-        
-    } catch (error) {
-        console.error(error);
-        container.innerHTML = '<tr><td colspan="4" class="p-4 text-red-400 text-sm text-center">Error al cargar goleadores</td></tr>';
-    }
-}
+        }
 
         function mostrarPartidos() {
             const container = document.getElementById('partidos-container');
@@ -276,28 +287,32 @@
             }
             
             partidosMostrar.forEach(partido => {
-                const esVastagoLocal = partido.Local && partido.Local.includes("Vástago");
-                const esVastagoVisita = partido.Visitante && partido.Visitante.includes("Vástago");
+                const infoLocal = obtenerInfoEquipo(partido.Local);
+                const infoVisita = obtenerInfoEquipo(partido.Visitante);
                 
                 const fecha = new Date(partido.Fecha);
                 const fechaFormateada = fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-                const equipoLocalHTML = esVastagoLocal 
+                const equipoLocalHTML = infoLocal.escudo
                     ? `<div class="flex items-center gap-2 sm:gap-3 justify-start">
-                        <img src="${ESCUDO_VASTAGO}" alt="Vástago F.C." class="escudo-equipo">
-                        <div class="text-sm sm:text-2xl font-black uppercase tracking-tight vastago-highlight">${partido.Local}</div>
+                        <img src="${infoLocal.escudo}" alt="${partido.Local}" class="escudo-equipo">
+                        <div class="text-sm sm:text-2xl font-black uppercase tracking-tight ${infoLocal.clase}">${partido.Local}</div>
                        </div>`
                     : `<div class="text-sm sm:text-2xl font-black uppercase tracking-tight">${partido.Local}</div>`;
 
-                const equipoVisitaHTML = esVastagoVisita 
+                const equipoVisitaHTML = infoVisita.escudo
                     ? `<div class="flex items-center gap-2 sm:gap-3 justify-end">
-                        <div class="text-sm sm:text-2xl font-black uppercase tracking-tight vastago-highlight">${partido.Visitante}</div>
-                        <img src="${ESCUDO_VASTAGO}" alt="Vástago F.C." class="escudo-equipo">
+                        <div class="text-sm sm:text-2xl font-black uppercase tracking-tight ${infoVisita.clase}">${partido.Visitante}</div>
+                        <img src="${infoVisita.escudo}" alt="${partido.Visitante}" class="escudo-equipo">
                        </div>`
                     : `<div class="text-sm sm:text-2xl font-black uppercase tracking-tight">${partido.Visitante}</div>`;
 
+                const borderColor = infoLocal.escudo || infoVisita.escudo 
+                    ? (infoLocal.escudo ? infoLocal.borderColor : infoVisita.borderColor)
+                    : 'border-transparent';
+
                 container.innerHTML += `
-                    <div class="glass rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-xl border-l-4 ${esVastagoLocal || esVastagoVisita ? 'border-green-500' : 'border-transparent'}">
+                    <div class="glass rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-xl border-l-4 ${borderColor}">
                         <div class="flex items-center justify-between gap-2 sm:gap-3">
                             <div class="w-[35%]">
                                 ${equipoLocalHTML}
@@ -321,106 +336,95 @@
             });
         }
 
-        ¡Perfecto! Te modifico la función generarTabla() para que muestre todos los equipos, incluso los que no jugaron todavía.
-
-✅ Reemplazá la función generarTabla():
-Buscá esta función en tu HTML:
-javascriptfunction generarTabla() {
-Y reemplazala por esta:
-javascriptfunction generarTabla() {
-    const equipos = {};
-    
-    // Primero, inicializar TODOS los equipos que aparecen en el fixture
-    datosActuales.forEach(partido => {
-        const local = partido.Local;
-        const visitante = partido.Visitante;
-        
-        if (!equipos[local]) {
-            equipos[local] = { equipo: local, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, pts: 0 };
+        function generarTabla() {
+            const equipos = {};
+            
+            datosActuales.forEach(partido => {
+                const local = partido.Local;
+                const visitante = partido.Visitante;
+                
+                if (!equipos[local]) {
+                    equipos[local] = { equipo: local, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, pts: 0 };
+                }
+                if (!equipos[visitante]) {
+                    equipos[visitante] = { equipo: visitante, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, pts: 0 };
+                }
+            });
+            
+            datosActuales.forEach(partido => {
+                if (partido.GolesL === "" || partido.GolesV === "") return;
+                
+                const local = partido.Local;
+                const visitante = partido.Visitante;
+                const golesL = parseInt(partido.GolesL);
+                const golesV = parseInt(partido.GolesV);
+                
+                equipos[local].pj++;
+                equipos[visitante].pj++;
+                equipos[local].gf += golesL;
+                equipos[local].gc += golesV;
+                equipos[visitante].gf += golesV;
+                equipos[visitante].gc += golesL;
+                
+                if (golesL > golesV) {
+                    equipos[local].pg++;
+                    equipos[local].pts += 3;
+                    equipos[visitante].pp++;
+                } else if (golesL < golesV) {
+                    equipos[visitante].pg++;
+                    equipos[visitante].pts += 3;
+                    equipos[local].pp++;
+                } else {
+                    equipos[local].pe++;
+                    equipos[visitante].pe++;
+                    equipos[local].pts++;
+                    equipos[visitante].pts++;
+                }
+            });
+            
+            const tablaOrdenada = Object.values(equipos).sort((a, b) => {
+                const difA = a.gf - a.gc;
+                const difB = b.gf - b.gc;
+                
+                if (b.pts !== a.pts) return b.pts - a.pts;
+                if (difB !== difA) return difB - difA;
+                return b.gf - a.gf;
+            });
+            
+            const tbody = document.getElementById('tabla-body');
+            tbody.innerHTML = "";
+            
+            tablaOrdenada.forEach((equipo, index) => {
+                const info = obtenerInfoEquipo(equipo.equipo);
+                const dif = equipo.gf - equipo.gc;
+                const difColor = dif > 0 ? 'text-green-400' : dif < 0 ? 'text-red-400' : 'text-slate-400';
+                
+                const equipoHTML = info.escudo
+                    ? `<div class="flex items-center gap-2">
+                        <img src="${info.escudo}" alt="${equipo.equipo}" class="escudo-equipo">
+                        <span class="${info.clase}">${equipo.equipo}</span>
+                       </div>`
+                    : equipo.equipo;
+                
+                tbody.innerHTML += `
+                    <tr class="border-t border-white/5 hover:bg-white/5 transition-colors ${info.bgColor}">
+                        <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-slate-400 text-xs sm:text-base">${index + 1}</td>
+                        <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-xs sm:text-lg">${equipoHTML}</td>
+                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-slate-400 text-xs sm:text-base">${equipo.pj}</td>
+                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-green-400 text-xs sm:text-base">${equipo.pg}</td>
+                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-slate-400 text-xs sm:text-base">${equipo.pe}</td>
+                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-red-400 text-xs sm:text-base">${equipo.pp}</td>
+                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-xs sm:text-base">${equipo.gf}</td>
+                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-xs sm:text-base">${equipo.gc}</td>
+                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center font-bold text-xs sm:text-base ${difColor}">${dif > 0 ? '+' : ''}${dif}</td>
+                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center font-black text-lg sm:text-2xl">${equipo.pts}</td>
+                    </tr>
+                `;
+            });
         }
-        if (!equipos[visitante]) {
-            equipos[visitante] = { equipo: visitante, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, pts: 0 };
-        }
-    });
-    
-    // Luego, calcular estadísticas solo de partidos jugados
-    datosActuales.forEach(partido => {
-        if (partido.GolesL === "" || partido.GolesV === "") return; // Saltar partidos no jugados
-        
-        const local = partido.Local;
-        const visitante = partido.Visitante;
-        const golesL = parseInt(partido.GolesL);
-        const golesV = parseInt(partido.GolesV);
-        
-        equipos[local].pj++;
-        equipos[visitante].pj++;
-        equipos[local].gf += golesL;
-        equipos[local].gc += golesV;
-        equipos[visitante].gf += golesV;
-        equipos[visitante].gc += golesL;
-        
-        if (golesL > golesV) {
-            equipos[local].pg++;
-            equipos[local].pts += 3;
-            equipos[visitante].pp++;
-        } else if (golesL < golesV) {
-            equipos[visitante].pg++;
-            equipos[visitante].pts += 3;
-            equipos[local].pp++;
-        } else {
-            equipos[local].pe++;
-            equipos[visitante].pe++;
-            equipos[local].pts++;
-            equipos[visitante].pts++;
-        }
-    });
-    
-    // Ordenar por puntos, diferencia de gol, goles a favor
-    const tablaOrdenada = Object.values(equipos).sort((a, b) => {
-        const difA = a.gf - a.gc;
-        const difB = b.gf - b.gc;
-        
-        if (b.pts !== a.pts) return b.pts - a.pts;
-        if (difB !== difA) return difB - difA;
-        return b.gf - a.gf;
-    });
-    
-    const tbody = document.getElementById('tabla-body');
-    tbody.innerHTML = "";
-    
-    tablaOrdenada.forEach((equipo, index) => {
-        const esVastago = equipo.equipo.includes("Vástago");
-        const dif = equipo.gf - equipo.gc;
-        const difColor = dif > 0 ? 'text-green-400' : dif < 0 ? 'text-red-400' : 'text-slate-400';
-        
-        const equipoHTML = esVastago
-            ? `<div class="flex items-center gap-2">
-                <img src="${ESCUDO_VASTAGO}" alt="Vástago F.C." class="escudo-equipo">
-                <span class="vastago-highlight">${equipo.equipo}</span>
-               </div>`
-            : equipo.equipo;
-        
-        tbody.innerHTML += `
-            <tr class="border-t border-white/5 hover:bg-white/5 transition-colors ${esVastago ? 'bg-green-500/5' : ''}">
-                <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-slate-400 text-xs sm:text-base">${index + 1}</td>
-                <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-xs sm:text-lg">${equipoHTML}</td>
-                <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-slate-400 text-xs sm:text-base">${equipo.pj}</td>
-                <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-green-400 text-xs sm:text-base">${equipo.pg}</td>
-                <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-slate-400 text-xs sm:text-base">${equipo.pe}</td>
-                <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-red-400 text-xs sm:text-base">${equipo.pp}</td>
-                <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-xs sm:text-base">${equipo.gf}</td>
-                <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-xs sm:text-base">${equipo.gc}</td>
-                <td class="py-2 sm:py-4 px-1 sm:px-3 text-center font-bold text-xs sm:text-base ${difColor}">${dif > 0 ? '+' : ''}${dif}</td>
-                <td class="py-2 sm:py-4 px-1 sm:px-3 text-center font-black text-lg sm:text-2xl">${equipo.pts}</td>
-            </tr>
-        `;
-    });
-}
 
         cambiarTorneo('Apertura');
         cambiarVista('proxima');
     </script>
 </body>
 </html>
-
-
