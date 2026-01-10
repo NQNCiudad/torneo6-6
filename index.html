@@ -321,87 +321,106 @@
             });
         }
 
-        function generarTabla() {
-            const equipos = {};
-            
-            datosActuales.forEach(partido => {
-                if (partido.GolesL === "" || partido.GolesV === "") return;
-                
-                const local = partido.Local;
-                const visitante = partido.Visitante;
-                const golesL = parseInt(partido.GolesL);
-                const golesV = parseInt(partido.GolesV);
-                
-                if (!equipos[local]) equipos[local] = { equipo: local, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, pts: 0 };
-                if (!equipos[visitante]) equipos[visitante] = { equipo: visitante, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, pts: 0 };
-                
-                equipos[local].pj++;
-                equipos[visitante].pj++;
-                equipos[local].gf += golesL;
-                equipos[local].gc += golesV;
-                equipos[visitante].gf += golesV;
-                equipos[visitante].gc += golesL;
-                
-                if (golesL > golesV) {
-                    equipos[local].pg++;
-                    equipos[local].pts += 3;
-                    equipos[visitante].pp++;
-                } else if (golesL < golesV) {
-                    equipos[visitante].pg++;
-                    equipos[visitante].pts += 3;
-                    equipos[local].pp++;
-                } else {
-                    equipos[local].pe++;
-                    equipos[visitante].pe++;
-                    equipos[local].pts++;
-                    equipos[visitante].pts++;
-                }
-            });
-            
-            const tablaOrdenada = Object.values(equipos).sort((a, b) => {
-                const difA = a.gf - a.gc;
-                const difB = b.gf - b.gc;
-                
-                if (b.pts !== a.pts) return b.pts - a.pts;
-                if (difB !== difA) return difB - difA;
-                return b.gf - a.gf;
-            });
-            
-            const tbody = document.getElementById('tabla-body');
-            tbody.innerHTML = "";
-            
-            tablaOrdenada.forEach((equipo, index) => {
-                const esVastago = equipo.equipo.includes("Vástago");
-                const dif = equipo.gf - equipo.gc;
-                const difColor = dif > 0 ? 'text-green-400' : dif < 0 ? 'text-red-400' : 'text-slate-400';
-                
-                const equipoHTML = esVastago
-                    ? `<div class="flex items-center gap-2">
-                        <img src="${ESCUDO_VASTAGO}" alt="Vástago F.C." class="escudo-equipo">
-                        <span class="vastago-highlight">${equipo.equipo}</span>
-                       </div>`
-                    : equipo.equipo;
-                
-                tbody.innerHTML += `
-                    <tr class="border-t border-white/5 hover:bg-white/5 transition-colors ${esVastago ? 'bg-green-500/5' : ''}">
-                        <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-slate-400 text-xs sm:text-base">${index + 1}</td>
-                        <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-xs sm:text-lg">${equipoHTML}</td>
-                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-slate-400 text-xs sm:text-base">${equipo.pj}</td>
-                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-green-400 text-xs sm:text-base">${equipo.pg}</td>
-                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-slate-400 text-xs sm:text-base">${equipo.pe}</td>
-                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-red-400 text-xs sm:text-base">${equipo.pp}</td>
-                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-xs sm:text-base">${equipo.gf}</td>
-                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-xs sm:text-base">${equipo.gc}</td>
-                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center font-bold text-xs sm:text-base ${difColor}">${dif > 0 ? '+' : ''}${dif}</td>
-                        <td class="py-2 sm:py-4 px-1 sm:px-3 text-center font-black text-lg sm:text-2xl">${equipo.pts}</td>
-                    </tr>
-                `;
-            });
+        ¡Perfecto! Te modifico la función generarTabla() para que muestre todos los equipos, incluso los que no jugaron todavía.
+
+✅ Reemplazá la función generarTabla():
+Buscá esta función en tu HTML:
+javascriptfunction generarTabla() {
+Y reemplazala por esta:
+javascriptfunction generarTabla() {
+    const equipos = {};
+    
+    // Primero, inicializar TODOS los equipos que aparecen en el fixture
+    datosActuales.forEach(partido => {
+        const local = partido.Local;
+        const visitante = partido.Visitante;
+        
+        if (!equipos[local]) {
+            equipos[local] = { equipo: local, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, pts: 0 };
         }
+        if (!equipos[visitante]) {
+            equipos[visitante] = { equipo: visitante, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, pts: 0 };
+        }
+    });
+    
+    // Luego, calcular estadísticas solo de partidos jugados
+    datosActuales.forEach(partido => {
+        if (partido.GolesL === "" || partido.GolesV === "") return; // Saltar partidos no jugados
+        
+        const local = partido.Local;
+        const visitante = partido.Visitante;
+        const golesL = parseInt(partido.GolesL);
+        const golesV = parseInt(partido.GolesV);
+        
+        equipos[local].pj++;
+        equipos[visitante].pj++;
+        equipos[local].gf += golesL;
+        equipos[local].gc += golesV;
+        equipos[visitante].gf += golesV;
+        equipos[visitante].gc += golesL;
+        
+        if (golesL > golesV) {
+            equipos[local].pg++;
+            equipos[local].pts += 3;
+            equipos[visitante].pp++;
+        } else if (golesL < golesV) {
+            equipos[visitante].pg++;
+            equipos[visitante].pts += 3;
+            equipos[local].pp++;
+        } else {
+            equipos[local].pe++;
+            equipos[visitante].pe++;
+            equipos[local].pts++;
+            equipos[visitante].pts++;
+        }
+    });
+    
+    // Ordenar por puntos, diferencia de gol, goles a favor
+    const tablaOrdenada = Object.values(equipos).sort((a, b) => {
+        const difA = a.gf - a.gc;
+        const difB = b.gf - b.gc;
+        
+        if (b.pts !== a.pts) return b.pts - a.pts;
+        if (difB !== difA) return difB - difA;
+        return b.gf - a.gf;
+    });
+    
+    const tbody = document.getElementById('tabla-body');
+    tbody.innerHTML = "";
+    
+    tablaOrdenada.forEach((equipo, index) => {
+        const esVastago = equipo.equipo.includes("Vástago");
+        const dif = equipo.gf - equipo.gc;
+        const difColor = dif > 0 ? 'text-green-400' : dif < 0 ? 'text-red-400' : 'text-slate-400';
+        
+        const equipoHTML = esVastago
+            ? `<div class="flex items-center gap-2">
+                <img src="${ESCUDO_VASTAGO}" alt="Vástago F.C." class="escudo-equipo">
+                <span class="vastago-highlight">${equipo.equipo}</span>
+               </div>`
+            : equipo.equipo;
+        
+        tbody.innerHTML += `
+            <tr class="border-t border-white/5 hover:bg-white/5 transition-colors ${esVastago ? 'bg-green-500/5' : ''}">
+                <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-slate-400 text-xs sm:text-base">${index + 1}</td>
+                <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-xs sm:text-lg">${equipoHTML}</td>
+                <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-slate-400 text-xs sm:text-base">${equipo.pj}</td>
+                <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-green-400 text-xs sm:text-base">${equipo.pg}</td>
+                <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-slate-400 text-xs sm:text-base">${equipo.pe}</td>
+                <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-red-400 text-xs sm:text-base">${equipo.pp}</td>
+                <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-xs sm:text-base">${equipo.gf}</td>
+                <td class="py-2 sm:py-4 px-1 sm:px-3 text-center text-xs sm:text-base">${equipo.gc}</td>
+                <td class="py-2 sm:py-4 px-1 sm:px-3 text-center font-bold text-xs sm:text-base ${difColor}">${dif > 0 ? '+' : ''}${dif}</td>
+                <td class="py-2 sm:py-4 px-1 sm:px-3 text-center font-black text-lg sm:text-2xl">${equipo.pts}</td>
+            </tr>
+        `;
+    });
+}
 
         cambiarTorneo('Apertura');
         cambiarVista('proxima');
     </script>
 </body>
 </html>
+
 
