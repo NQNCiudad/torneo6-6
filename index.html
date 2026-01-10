@@ -192,48 +192,67 @@
         }
 
         async function cargarGoleadores() {
-            const container = document.getElementById('goleadores-body');
-            container.innerHTML = '<tr><td colspan="4" class="py-10 text-center text-slate-400 italic text-sm">Cargando goleadores...</td></tr>';
-            
-            try {
-                const response = await fetch(API_URL + "?accion=goleadores&t=" + new Date().getTime());
-                const goleadores = await response.json();
-                
-                if (goleadores.error) {
-                    container.innerHTML = `<tr><td colspan="4" class="p-4 text-red-400 font-medium text-sm text-center">${goleadores.error}</td></tr>`;
-                    return;
-                }
-
-                // Ordenar por goles (mayor a menor)
-                goleadores.sort((a, b) => b.Goles - a.Goles);
-                
-                container.innerHTML = "";
-                
-                goleadores.forEach((goleador, index) => {
-                    const esVastago = goleador.Equipo && goleador.Equipo.includes("Vástago");
-                    
-                    const equipoHTML = esVastago
-                        ? `<div class="flex items-center gap-2">
-                            <img src="${ESCUDO_VASTAGO}" alt="Vástago F.C." class="escudo-equipo">
-                            <span class="vastago-highlight">${goleador.Equipo}</span>
-                           </div>`
-                        : goleador.Equipo;
-                    
-                    container.innerHTML += `
-                        <tr class="border-t border-white/5 hover:bg-white/5 transition-colors ${esVastago ? 'bg-green-500/5' : ''}">
-                            <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-slate-400 text-xs sm:text-base">${index + 1}</td>
-                            <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-xs sm:text-lg ${esVastago ? 'vastago-highlight' : ''}">${goleador.Jugador}</td>
-                            <td class="py-2 sm:py-4 px-2 sm:px-4 text-xs sm:text-base">${equipoHTML}</td>
-                            <td class="py-2 sm:py-4 px-2 sm:px-4 text-center font-black text-lg sm:text-2xl text-green-400">${goleador.Goles}</td>
-                        </tr>
-                    `;
-                });
-                
-            } catch (error) {
-                console.error(error);
-                container.innerHTML = '<tr><td colspan="4" class="p-4 text-red-400 text-sm text-center">Error al cargar goleadores</td></tr>';
-            }
+    const container = document.getElementById('goleadores-body');
+    container.innerHTML = '<tr><td colspan="4" class="py-10 text-center text-slate-400 italic text-sm">Cargando goleadores...</td></tr>';
+    
+    try {
+        const response = await fetch(API_URL + "?accion=goleadores&t=" + new Date().getTime());
+        const goleadores = await response.json();
+        
+        if (goleadores.error) {
+            container.innerHTML = `<tr><td colspan="4" class="p-4 text-red-400 font-medium text-sm text-center">${goleadores.error}</td></tr>`;
+            return;
         }
+
+        // Agrupar goles por jugador
+        const jugadoresMap = {};
+        
+        goleadores.forEach(goleador => {
+            const jugador = goleador.Jugador;
+            const equipo = goleador.Equipo;
+            const goles = parseInt(goleador.Goles) || 0;
+            
+            if (!jugadoresMap[jugador]) {
+                jugadoresMap[jugador] = {
+                    Jugador: jugador,
+                    Equipo: equipo,
+                    Goles: 0
+                };
+            }
+            
+            jugadoresMap[jugador].Goles += goles;
+        });
+        
+        // Convertir a array y ordenar por goles
+        const goleadoresAgrupados = Object.values(jugadoresMap).sort((a, b) => b.Goles - a.Goles);
+        
+        container.innerHTML = "";
+        
+        goleadoresAgrupados.forEach((goleador, index) => {
+            const esVastago = goleador.Equipo && goleador.Equipo.includes("Vástago");
+            
+            const equipoHTML = esVastago
+                ? `<div class="flex items-center gap-2">
+                    <img src="${ESCUDO_VASTAGO}" alt="Vástago F.C." class="escudo-equipo">
+                    <span class="vastago-highlight">${goleador.Equipo}</span>
+                   </div>`
+                : goleador.Equipo;
+            
+            container.innerHTML += `
+                <tr class="border-t border-white/5 hover:bg-white/5 transition-colors ${esVastago ? 'bg-green-500/5' : ''}">
+                    <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-slate-400 text-xs sm:text-base">${index + 1}</td>
+                    <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-xs sm:text-lg ${esVastago ? 'vastago-highlight' : ''}">${goleador.Jugador}</td>
+                    <td class="py-2 sm:py-4 px-2 sm:px-4 text-xs sm:text-base">${equipoHTML}</td>
+                    <td class="py-2 sm:py-4 px-2 sm:px-4 text-center font-black text-lg sm:text-2xl text-green-400">${goleador.Goles}</td>
+                </tr>
+            `;
+        });
+        
+    } catch (error) {
+        console.error(error);
+        container.innerHTML = '<tr><td colspan="4" class="p-4 text-red-400 text-sm text-center">Error al cargar goleadores</td></tr>';
+    }
+}
 
         function mostrarPartidos() {
             const container = document.getElementById('partidos-container');
@@ -385,3 +404,4 @@
     </script>
 </body>
 </html>
+
