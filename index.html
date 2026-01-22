@@ -84,6 +84,12 @@
             color: white;
         }
         
+        textarea.input-goles {
+            text-align: left;
+            font-weight: normal;
+            font-family: 'Inter', sans-serif;
+        }
+        
         /* Mobile optimization */
         @media (max-width: 640px) {
             .hero-bg {
@@ -184,6 +190,39 @@
                         </button>
                     </div>
                     <p class="text-xs text-slate-400 mt-2">Los jugadores invitados se guardan automáticamente y aparecerán en la lista.</p>
+                </div>
+
+                <!-- Gestión de Noticias -->
+                <div class="mt-6 glass rounded-xl p-4 border border-blue-500">
+                    <h3 class="font-bold text-blue-400 mb-3 flex items-center gap-2">
+                        <span class="text-xl">📰</span> Gestión de Noticias
+                    </h3>
+                    
+                    <!-- Agregar Noticia -->
+                    <div class="mb-4 bg-white/5 p-3 rounded-lg">
+                        <h4 class="text-sm font-bold text-blue-300 mb-2">Agregar Nueva Noticia</h4>
+                        <div class="space-y-2">
+                            <select id="tipo-noticia" class="input-goles w-full">
+                                <option value="transferencia">🔄 Transferencia</option>
+                                <option value="gol">⚽ Gol Destacado</option>
+                                <option value="lesion">🏥 Lesión</option>
+                                <option value="general">📢 Noticia General</option>
+                            </select>
+                            <input type="text" id="titulo-noticia" class="input-goles w-full" placeholder="Título de la noticia">
+                            <textarea id="contenido-noticia" class="input-goles w-full h-20 resize-none" placeholder="Contenido de la noticia..."></textarea>
+                            <button onclick="agregarNoticia()" class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-xl font-bold text-sm w-full">
+                                ➕ Publicar Noticia
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Noticias -->
+                    <div class="bg-white/5 p-3 rounded-lg">
+                        <h4 class="text-sm font-bold text-blue-300 mb-2">Noticias Publicadas</h4>
+                        <div id="admin-noticias-lista" class="space-y-2 max-h-60 overflow-y-auto">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -292,6 +331,36 @@
                 </div>
             </div>
         </div>
+
+        <!-- Sección de Noticias (Siempre visible debajo del contenido principal) -->
+        <div class="mt-8 sm:mt-12">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl sm:text-4xl font-black uppercase tracking-tight mb-2" style="font-family: 'Oswald';">
+                    📰 NOTICIAS DEL <span class="text-green-500">FÚTBOL</span>
+                </h2>
+                <p class="text-slate-400 text-xs sm:text-sm uppercase tracking-wider">Torneo y noticias generales</p>
+            </div>
+            
+            <!-- Carrusel de Noticias -->
+            <div class="relative overflow-hidden">
+                <div id="noticias-carrusel" class="transition-opacity duration-1000 ease-in-out">
+                    <!-- Se llena dinámicamente -->
+                </div>
+                
+                <!-- Indicadores de navegación -->
+                <div class="flex justify-center gap-2 mt-4">
+                    <button onclick="noticiaAnterior()" class="glass px-4 py-2 rounded-xl hover:bg-white/10 transition-all">
+                        ← Anterior
+                    </button>
+                    <div id="noticia-indicador" class="glass px-4 py-2 rounded-xl text-sm font-bold">
+                        1 / 1
+                    </div>
+                    <button onclick="noticiaSiguiente()" class="glass px-4 py-2 rounded-xl hover:bg-white/10 transition-all">
+                        Siguiente →
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -305,6 +374,9 @@
         let datosActuales = [];
         let temporadaAdmin = 'Apertura';
         let adminAutenticado = false;
+        let todasLasNoticias = [];
+        let noticiaActualIndex = 0;
+        let carruselInterval = null;
 
         // Base de datos de jugadores
         const jugadoresDB = {
@@ -351,6 +423,7 @@
             panel.classList.toggle('hidden');
             if (!panel.classList.contains('hidden') && adminAutenticado) {
                 cargarPanelAdmin();
+                cargarNoticiasAdmin();
             }
         }
 
@@ -360,6 +433,7 @@
                 adminAutenticado = true;
                 document.getElementById('admin-content').classList.remove('hidden');
                 cargarPanelAdmin();
+                cargarNoticiasAdmin();
             } else {
                 alert('❌ Contraseña incorrecta');
             }
@@ -407,6 +481,11 @@
                                            value="${goles}" 
                                            min="0"
                                            data-key="${key}">
+                                    <button onclick="transferirJugador('${equipo}', '${jugador.nombre.replace(/'/g, "\\'")}', ${esInvitado}, event)" 
+                                            class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs font-bold"
+                                            title="Transferir a otro equipo">
+                                        ⇄
+                                    </button>
                                     ${esInvitado ? `
                                         <button onclick="eliminarJugador('${equipo}', '${jugador.nombre.replace(/'/g, "\\'")}', event)" 
                                                 class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs font-bold"
@@ -556,6 +635,60 @@
             alert('✅ Jugador eliminado: ' + nombreJugador);
         }
 
+        function transferirJugador(equipoOrigen, nombreJugador, esInvitado, event) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const equipoDestino = equipoOrigen === "Vástago F.C." ? "Nacional F.C." : "Vástago F.C.";
+            
+            if (!confirm(`🔄 ¿Transferir a "${nombreJugador}" de ${equipoOrigen} a ${equipoDestino}?\n\nSus goles anteriores con ${equipoOrigen} se mantendrán en la tabla de goleadores.\nAhora podrás cargar sus nuevos goles con ${equipoDestino}.`)) {
+                return;
+            }
+            
+            // Verificar si ya existe en el equipo destino
+            const yaExiste = jugadoresDB[equipoDestino].some(j => j.nombre === nombreJugador);
+            if (!yaExiste) {
+                jugadoresDB[equipoDestino].push({ nombre: nombreJugador, apodo: "" });
+            }
+            
+            // Actualizar jugadores custom en localStorage
+            const jugadoresCustom = JSON.parse(localStorage.getItem('jugadores_custom') || '{}');
+            
+            // Mantener en el equipo origen (si es invitado, ya estaba; si es titular, lo agregamos)
+            if (!jugadoresCustom[equipoOrigen]) {
+                jugadoresCustom[equipoOrigen] = [];
+            }
+            const existeEnOrigen = jugadoresCustom[equipoOrigen].some(j => j.nombre === nombreJugador);
+            if (!existeEnOrigen && !esInvitado) {
+                // Si es jugador titular, lo marcamos como custom en origen para poder seguir gestionando
+                jugadoresCustom[equipoOrigen].push({ nombre: nombreJugador, apodo: "" });
+            }
+            
+            // Agregar al equipo destino
+            if (!jugadoresCustom[equipoDestino]) {
+                jugadoresCustom[equipoDestino] = [];
+            }
+            const existeEnDestino = jugadoresCustom[equipoDestino].some(j => j.nombre === nombreJugador);
+            if (!existeEnDestino) {
+                jugadoresCustom[equipoDestino].push({ nombre: nombreJugador, apodo: "" });
+            }
+            
+            localStorage.setItem('jugadores_custom', JSON.stringify(jugadoresCustom));
+            
+            // Los goles se mantienen con sus claves originales (equipo|nombre)
+            // Esto permite ver el historial completo en la tabla de goleadores
+            
+            // Recargar panel
+            cargarPanelAdmin();
+            
+            // Recargar tabla de goleadores si está visible
+            if (vistaActual === 'goleadores') {
+                cargarGoleadoresLocal();
+            }
+            
+            alert(`✅ Jugador transferido:\n"${nombreJugador}"\n${equipoOrigen} → ${equipoDestino}\n\n✓ Ahora aparece en AMBOS equipos\n✓ Sus goles con ${equipoOrigen} se mantienen\n✓ Podés cargar nuevos goles con ${equipoDestino}`);
+        }
+
         function cambiarTorneo(torneo) {
             torneoActual = torneo;
             document.querySelectorAll('[id^="btn-torneo-"]').forEach(b => b.classList.remove('btn-activo'));
@@ -589,6 +722,244 @@
                 document.getElementById('partidos-container').classList.remove('hidden');
                 mostrarPartidos();
             }
+            
+            // Las noticias siempre se muestran debajo
+            mostrarNoticias();
+        }
+
+        function agregarNoticia() {
+            const tipo = document.getElementById('tipo-noticia').value;
+            const titulo = document.getElementById('titulo-noticia').value.trim();
+            const contenido = document.getElementById('contenido-noticia').value.trim();
+            
+            if (!titulo) {
+                alert('❌ Por favor ingresa un título');
+                return;
+            }
+            
+            if (!contenido) {
+                alert('❌ Por favor ingresa el contenido');
+                return;
+            }
+            
+            const noticias = JSON.parse(localStorage.getItem('noticias') || '[]');
+            
+            const noticia = {
+                id: Date.now(),
+                tipo: tipo,
+                titulo: titulo,
+                contenido: contenido,
+                fecha: new Date().toISOString()
+            };
+            
+            noticias.unshift(noticia); // Agregar al principio
+            localStorage.setItem('noticias', JSON.stringify(noticias));
+            
+            // Limpiar campos
+            document.getElementById('titulo-noticia').value = '';
+            document.getElementById('contenido-noticia').value = '';
+            
+            // Actualizar listas
+            cargarNoticiasAdmin();
+            mostrarNoticias(); // Recargar carrusel
+            
+            alert('✅ Noticia publicada correctamente');
+        }
+
+        function eliminarNoticia(id) {
+            if (!confirm('¿Estás seguro de eliminar esta noticia?')) {
+                return;
+            }
+            
+            let noticias = JSON.parse(localStorage.getItem('noticias') || '[]');
+            noticias = noticias.filter(n => n.id !== id);
+            localStorage.setItem('noticias', JSON.stringify(noticias));
+            
+            cargarNoticiasAdmin();
+            mostrarNoticias(); // Recargar carrusel
+            
+            alert('✅ Noticia eliminada');
+        }
+
+        function cargarNoticiasAdmin() {
+            const container = document.getElementById('admin-noticias-lista');
+            const noticias = JSON.parse(localStorage.getItem('noticias') || '[]');
+            
+            if (noticias.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">No hay noticias publicadas</p>';
+                return;
+            }
+            
+            container.innerHTML = noticias.map(noticia => {
+                const iconos = {
+                    transferencia: '🔄',
+                    gol: '⚽',
+                    lesion: '🏥',
+                    general: '📢'
+                };
+                
+                return `
+                    <div class="bg-white/10 p-2 rounded text-xs">
+                        <div class="flex justify-between items-start gap-2">
+                            <span class="font-bold">${iconos[noticia.tipo]} ${noticia.titulo}</span>
+                            <button onclick="eliminarNoticia(${noticia.id})" class="text-red-400 hover:text-red-300">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function mostrarNoticias() {
+            cargarTodasLasNoticias();
+        }
+
+        async function cargarTodasLasNoticias() {
+            // Obtener noticias del torneo
+            const noticiasLocales = JSON.parse(localStorage.getItem('noticias') || '[]');
+            
+            // Obtener noticias de fútbol general
+            const noticiasFutbol = await obtenerNoticiasFutbol();
+            
+            // Combinar todas las noticias
+            todasLasNoticias = [
+                ...noticiasLocales.map(n => ({ ...n, origen: 'torneo' })),
+                ...noticiasFutbol.map(n => ({ ...n, origen: 'futbol' }))
+            ];
+            
+            if (todasLasNoticias.length === 0) {
+                document.getElementById('noticias-carrusel').innerHTML = `
+                    <div class="glass rounded-2xl p-8 text-center">
+                        <div class="text-6xl mb-4">📰</div>
+                        <h3 class="text-xl font-bold text-slate-300 mb-2">No hay noticias todavía</h3>
+                        <p class="text-slate-400 text-sm">Las noticias aparecerán aquí</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Iniciar carrusel
+            noticiaActualIndex = 0;
+            mostrarNoticiaActual();
+            iniciarCarruselAutomatico();
+        }
+
+        async function obtenerNoticiasFutbol() {
+            // Noticias de ejemplo (hardcoded) - En producción podrías usar una API real
+            const noticiasFutbol = [
+                {
+                    id: 'f1',
+                    tipo: 'general',
+                    titulo: 'Messi anota triplete en victoria del Inter Miami',
+                    contenido: 'Lionel Messi brilló con tres goles en la victoria 4-1 del Inter Miami ante Nashville SC en la MLS.',
+                    fecha: new Date().toISOString()
+                },
+                {
+                    id: 'f2',
+                    tipo: 'transferencia',
+                    titulo: 'Oficial: Mbappé firma con Real Madrid',
+                    contenido: 'El delantero francés firmó contrato con el Real Madrid hasta 2029, cumpliendo su sueño de jugar en el Santiago Bernabéu.',
+                    fecha: new Date().toISOString()
+                },
+                {
+                    id: 'f3',
+                    tipo: 'general',
+                    titulo: 'Argentina mantiene el liderato en el ranking FIFA',
+                    contenido: 'La Selección Argentina continúa como líder del ranking mundial de la FIFA, seguida por Francia y Brasil.',
+                    fecha: new Date().toISOString()
+                },
+                {
+                    id: 'f4',
+                    tipo: 'gol',
+                    titulo: 'Haaland rompe récord de goles en Premier League',
+                    contenido: 'El noruego superó el récord histórico de goles en una temporada de la Premier League con 37 tantos.',
+                    fecha: new Date().toISOString()
+                }
+            ];
+            
+            return noticiasFutbol;
+        }
+
+        function mostrarNoticiaActual() {
+            if (todasLasNoticias.length === 0) return;
+            
+            const noticia = todasLasNoticias[noticiaActualIndex];
+            const container = document.getElementById('noticias-carrusel');
+            
+            const iconos = {
+                transferencia: '🔄',
+                gol: '⚽',
+                lesion: '🏥',
+                general: '📢'
+            };
+            
+            const colores = {
+                transferencia: 'border-blue-500',
+                gol: 'border-green-500',
+                lesion: 'border-red-500',
+                general: 'border-yellow-500'
+            };
+            
+            const fecha = new Date(noticia.fecha);
+            const fechaFormateada = fecha.toLocaleDateString('es-AR', { 
+                day: '2-digit', 
+                month: 'long', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            const badge = noticia.origen === 'torneo' 
+                ? '<span class="bg-green-500 text-black px-3 py-1 rounded-full text-xs font-bold uppercase">Los Pibes 6+6</span>'
+                : '<span class="bg-slate-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">Fútbol Mundial</span>';
+            
+            // Aplicar fade out
+            container.style.opacity = '0';
+            
+            setTimeout(() => {
+                container.innerHTML = `
+                    <div class="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 border-l-4 ${colores[noticia.tipo]}">
+                        <div class="flex items-start gap-3">
+                            <div class="text-3xl sm:text-4xl">${iconos[noticia.tipo]}</div>
+                            <div class="flex-1">
+                                <div class="mb-2">${badge}</div>
+                                <h3 class="text-lg sm:text-2xl font-bold text-white mb-3">${noticia.titulo}</h3>
+                                <p class="text-sm sm:text-base text-slate-300 mb-3 leading-relaxed">${noticia.contenido}</p>
+                                <p class="text-xs text-slate-500 uppercase tracking-wide">${fechaFormateada}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Aplicar fade in
+                container.style.opacity = '1';
+                
+                // Actualizar indicador
+                document.getElementById('noticia-indicador').textContent = `${noticiaActualIndex + 1} / ${todasLasNoticias.length}`;
+            }, 300);
+        }
+
+        function iniciarCarruselAutomatico() {
+            // Limpiar intervalo anterior si existe
+            if (carruselInterval) {
+                clearInterval(carruselInterval);
+            }
+            
+            // Cambiar noticia cada 7 segundos
+            carruselInterval = setInterval(() => {
+                noticiaSiguiente();
+            }, 7000);
+        }
+
+        function noticiaSiguiente() {
+            if (todasLasNoticias.length === 0) return;
+            noticiaActualIndex = (noticiaActualIndex + 1) % todasLasNoticias.length;
+            mostrarNoticiaActual();
+        }
+
+        function noticiaAnterior() {
+            if (todasLasNoticias.length === 0) return;
+            noticiaActualIndex = (noticiaActualIndex - 1 + todasLasNoticias.length) % todasLasNoticias.length;
+            mostrarNoticiaActual();
         }
 
         async function cargarDatos() {
@@ -627,35 +998,38 @@
             const golesApertura = JSON.parse(localStorage.getItem('goles_Apertura') || '{}');
             const golesClausura = JSON.parse(localStorage.getItem('goles_Clausura') || '{}');
             
-            const goleadoresArray = [];
+            // Objeto para agrupar goles por jugador
+            const jugadoresMap = {};
             
-            // Procesar goles de Apertura
-            Object.keys(golesApertura).forEach(key => {
-                const [equipo, nombre] = key.split('|');
-                goleadoresArray.push({
-                    Jugador: nombre,
-                    Equipo: equipo,
-                    Goles: golesApertura[key]
+            // Función para procesar goles
+            const procesarGoles = (golesTemp) => {
+                Object.keys(golesTemp).forEach(key => {
+                    const [equipo, nombre] = key.split('|');
+                    const goles = golesTemp[key];
+                    
+                    if (!jugadoresMap[nombre]) {
+                        jugadoresMap[nombre] = {
+                            nombre: nombre,
+                            golesTotal: 0,
+                            equipos: {}
+                        };
+                    }
+                    
+                    // Sumar goles por equipo
+                    if (!jugadoresMap[nombre].equipos[equipo]) {
+                        jugadoresMap[nombre].equipos[equipo] = 0;
+                    }
+                    jugadoresMap[nombre].equipos[equipo] += goles;
+                    jugadoresMap[nombre].golesTotal += goles;
                 });
-            });
+            };
             
-            // Procesar goles de Clausura
-            Object.keys(golesClausura).forEach(key => {
-                const [equipo, nombre] = key.split('|');
-                const existente = goleadoresArray.find(g => g.Jugador === nombre);
-                if (existente) {
-                    existente.Goles += golesClausura[key];
-                } else {
-                    goleadoresArray.push({
-                        Jugador: nombre,
-                        Equipo: equipo,
-                        Goles: golesClausura[key]
-                    });
-                }
-            });
+            // Procesar ambas temporadas
+            procesarGoles(golesApertura);
+            procesarGoles(golesClausura);
             
-            // Ordenar por goles
-            goleadoresArray.sort((a, b) => b.Goles - a.Goles);
+            // Convertir a array y ordenar por goles totales
+            const goleadoresArray = Object.values(jugadoresMap).sort((a, b) => b.golesTotal - a.golesTotal);
             
             container.innerHTML = "";
             
@@ -665,21 +1039,50 @@
             }
             
             goleadoresArray.forEach((goleador, index) => {
-                const info = obtenerInfoEquipo(goleador.Equipo);
+                // Determinar equipo principal (donde tiene más goles)
+                let equipoPrincipal = "";
+                let maxGoles = 0;
+                Object.keys(goleador.equipos).forEach(equipo => {
+                    if (goleador.equipos[equipo] > maxGoles) {
+                        maxGoles = goleador.equipos[equipo];
+                        equipoPrincipal = equipo;
+                    }
+                });
+                
+                const info = obtenerInfoEquipo(equipoPrincipal);
+                
+                // Crear detalle de goles por equipo
+                let detalleEquipos = "";
+                const equiposOrdenados = Object.keys(goleador.equipos).sort();
+                
+                if (equiposOrdenados.length > 1) {
+                    // Si jugó en más de un equipo, mostrar el desglose
+                    const desglose = equiposOrdenados.map(equipo => {
+                        const infoEq = obtenerInfoEquipo(equipo);
+                        return `<span class="${infoEq.clase}">${goleador.equipos[equipo]}</span>`;
+                    }).join(' + ');
+                    detalleEquipos = `<div class="text-xs text-slate-400 mt-1">(${desglose})</div>`;
+                } else {
+                    // Si jugó en un solo equipo, no mostrar detalle
+                    detalleEquipos = "";
+                }
                 
                 const equipoHTML = info.escudo
                     ? `<div class="flex items-center gap-2">
-                        <img src="${info.escudo}" alt="${goleador.Equipo}" class="escudo-equipo">
-                        <span class="${info.clase}">${goleador.Equipo}</span>
+                        <img src="${info.escudo}" alt="${equipoPrincipal}" class="escudo-equipo">
+                        <div>
+                            <span class="${info.clase}">${equipoPrincipal}</span>
+                            ${detalleEquipos}
+                        </div>
                        </div>`
-                    : goleador.Equipo;
+                    : `<div>${equipoPrincipal}${detalleEquipos}</div>`;
                 
                 container.innerHTML += `
                     <tr class="border-t border-white/5 hover:bg-white/5 transition-colors ${info.bgColor}">
                         <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-slate-400 text-xs sm:text-base">${index + 1}</td>
-                        <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-xs sm:text-lg ${info.clase}">${goleador.Jugador}</td>
+                        <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-xs sm:text-lg ${info.clase}">${goleador.nombre}</td>
                         <td class="py-2 sm:py-4 px-2 sm:px-4 text-xs sm:text-base">${equipoHTML}</td>
-                        <td class="py-2 sm:py-4 px-2 sm:px-4 text-center font-black text-lg sm:text-2xl text-green-400">${goleador.Goles}</td>
+                        <td class="py-2 sm:py-4 px-2 sm:px-4 text-center font-black text-lg sm:text-2xl text-green-400">${goleador.golesTotal}</td>
                     </tr>
                 `;
             });
@@ -952,6 +1355,7 @@
         cambiarTorneo('Apertura');
         cambiarVista('proxima');
         cargarJugadoresCustom(); // Cargar jugadores personalizados al inicio
+        mostrarNoticias(); // Cargar noticias al inicio
     </script>
 </body>
 </html>
