@@ -72,6 +72,18 @@
             background: rgba(255, 255, 255, 0.15);
         }
         
+        select.input-goles {
+            cursor: pointer;
+        }
+        select.input-goles option {
+            background: #1e293b;
+            color: #ffffff;
+            font-weight: bold;
+        }
+        select.input-goles:not(:focus) {
+            color: white;
+        }
+        
         /* Mobile optimization */
         @media (max-width: 640px) {
             .hero-bg {
@@ -153,6 +165,25 @@
                     <button onclick="resetearGoles()" class="bg-red-500 hover:bg-red-600 px-6 py-3 rounded-xl font-bold text-sm">
                         🗑️ Resetear
                     </button>
+                </div>
+
+                <!-- Agregar Jugador Nuevo -->
+                <div class="mt-6 glass rounded-xl p-4 border border-yellow-500">
+                    <h3 class="font-bold text-yellow-400 mb-3 flex items-center gap-2">
+                        <span class="text-xl">➕</span> Agregar Jugador Invitado
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <input type="text" id="nuevo-jugador-nombre" class="input-goles w-full" placeholder='Nombre completo (ej: Juan "El Tigre" Pérez)'>
+                        <select id="nuevo-jugador-equipo" class="input-goles w-full">
+                            <option value="">Selecciona equipo...</option>
+                            <option value="Vástago F.C.">Vástago F.C.</option>
+                            <option value="Nacional F.C.">Nacional F.C.</option>
+                        </select>
+                        <button onclick="agregarJugadorNuevo()" class="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded-xl font-bold text-sm text-black">
+                            ➕ Agregar
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2">Los jugadores invitados se guardan automáticamente y aparecerán en la lista.</p>
                 </div>
             </div>
         </div>
@@ -410,6 +441,61 @@
                 cargarPanelAdmin();
                 alert('✅ Goles reseteados');
             }
+        }
+
+        function agregarJugadorNuevo() {
+            const nombre = document.getElementById('nuevo-jugador-nombre').value.trim();
+            const equipo = document.getElementById('nuevo-jugador-equipo').value;
+            
+            if (!nombre) {
+                alert('❌ Por favor ingresa el nombre del jugador');
+                return;
+            }
+            
+            if (!equipo) {
+                alert('❌ Por favor selecciona un equipo');
+                return;
+            }
+            
+            // Verificar si el jugador ya existe
+            const yaExiste = jugadoresDB[equipo].some(j => j.nombre === nombre);
+            if (yaExiste) {
+                alert('⚠️ Este jugador ya existe en ' + equipo);
+                return;
+            }
+            
+            // Agregar jugador a la base de datos
+            jugadoresDB[equipo].push({ nombre: nombre, apodo: "" });
+            
+            // Guardar jugadores personalizados en localStorage
+            const jugadoresCustom = JSON.parse(localStorage.getItem('jugadores_custom') || '{}');
+            if (!jugadoresCustom[equipo]) {
+                jugadoresCustom[equipo] = [];
+            }
+            jugadoresCustom[equipo].push({ nombre: nombre, apodo: "" });
+            localStorage.setItem('jugadores_custom', JSON.stringify(jugadoresCustom));
+            
+            // Limpiar campos
+            document.getElementById('nuevo-jugador-nombre').value = '';
+            document.getElementById('nuevo-jugador-equipo').value = '';
+            
+            // Recargar panel
+            cargarPanelAdmin();
+            
+            alert('✅ Jugador agregado: ' + nombre + ' → ' + equipo);
+        }
+
+        function cargarJugadoresCustom() {
+            const jugadoresCustom = JSON.parse(localStorage.getItem('jugadores_custom') || '{}');
+            
+            Object.keys(jugadoresCustom).forEach(equipo => {
+                jugadoresCustom[equipo].forEach(jugador => {
+                    const yaExiste = jugadoresDB[equipo].some(j => j.nombre === jugador.nombre);
+                    if (!yaExiste) {
+                        jugadoresDB[equipo].push(jugador);
+                    }
+                });
+            });
         }
 
         function cambiarTorneo(torneo) {
@@ -807,6 +893,7 @@
 
         cambiarTorneo('Apertura');
         cambiarVista('proxima');
+        cargarJugadoresCustom(); // Cargar jugadores personalizados al inicio
     </script>
 </body>
 </html>
