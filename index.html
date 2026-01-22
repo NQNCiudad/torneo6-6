@@ -377,6 +377,7 @@
             container.innerHTML = '';
             
             const golesGuardados = JSON.parse(localStorage.getItem('goles_' + temporadaAdmin) || '{}');
+            const jugadoresCustom = JSON.parse(localStorage.getItem('jugadores_custom') || '{}');
             
             Object.keys(jugadoresDB).forEach(equipo => {
                 const info = obtenerInfoEquipo(equipo);
@@ -392,15 +393,27 @@
                         ${jugadoresDB[equipo].map(jugador => {
                             const key = equipo + '|' + jugador.nombre;
                             const goles = golesGuardados[key] || 0;
+                            
+                            // Verificar si es un jugador invitado (custom)
+                            const esInvitado = jugadoresCustom[equipo] && 
+                                             jugadoresCustom[equipo].some(j => j.nombre === jugador.nombre);
+                            
                             return `
-                                <div class="flex justify-between items-center bg-white/5 p-2 rounded-lg">
-                                    <span class="text-sm font-medium">${jugador.nombre}</span>
+                                <div class="flex justify-between items-center gap-2 bg-white/5 p-2 rounded-lg ${esInvitado ? 'border border-yellow-500/30' : ''}">
+                                    <span class="text-sm font-medium flex-1 ${esInvitado ? 'text-yellow-300' : ''}">${jugador.nombre}</span>
                                     <input type="number" 
                                            class="input-goles" 
                                            id="goles-${key.replace(/[^a-zA-Z0-9]/g, '_')}"
                                            value="${goles}" 
                                            min="0"
                                            data-key="${key}">
+                                    ${esInvitado ? `
+                                        <button onclick="eliminarJugador('${equipo}', '${jugador.nombre.replace(/'/g, "\\'")}', event)" 
+                                                class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs font-bold"
+                                                title="Eliminar jugador">
+                                            🗑️
+                                        </button>
+                                    ` : ''}
                                 </div>
                             `;
                         }).join('')}
@@ -496,6 +509,51 @@
                     }
                 });
             });
+        }
+
+        function eliminarJugador(equipo, nombreJugador, event) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            if (!confirm(`⚠️ ¿Estás seguro de eliminar a "${nombreJugador}" de ${equipo}?\n\nEsto eliminará todos sus goles registrados en todas las temporadas.`)) {
+                return;
+            }
+            
+            // Eliminar de la base de datos en memoria
+            const index = jugadoresDB[equipo].findIndex(j => j.nombre === nombreJugador);
+            if (index !== -1) {
+                jugadoresDB[equipo].splice(index, 1);
+            }
+            
+            // Eliminar de jugadores custom en localStorage
+            const jugadoresCustom = JSON.parse(localStorage.getItem('jugadores_custom') || '{}');
+            if (jugadoresCustom[equipo]) {
+                jugadoresCustom[equipo] = jugadoresCustom[equipo].filter(j => j.nombre !== nombreJugador);
+                if (jugadoresCustom[equipo].length === 0) {
+                    delete jugadoresCustom[equipo];
+                }
+                localStorage.setItem('jugadores_custom', JSON.stringify(jugadoresCustom));
+            }
+            
+            // Eliminar goles de todas las temporadas
+            ['Apertura', 'Clausura'].forEach(temp => {
+                const goles = JSON.parse(localStorage.getItem('goles_' + temp) || '{}');
+                const key = equipo + '|' + nombreJugador;
+                if (goles[key]) {
+                    delete goles[key];
+                    localStorage.setItem('goles_' + temp, JSON.stringify(goles));
+                }
+            });
+            
+            // Recargar panel
+            cargarPanelAdmin();
+            
+            // Recargar tabla de goleadores si está visible
+            if (vistaActual === 'goleadores') {
+                cargarGoleadoresLocal();
+            }
+            
+            alert('✅ Jugador eliminado: ' + nombreJugador);
         }
 
         function cambiarTorneo(torneo) {
