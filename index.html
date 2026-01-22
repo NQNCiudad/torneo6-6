@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Los Pibes 6+6 | Oficial</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body { 
@@ -34,6 +35,43 @@
         .btn-activo { background: #22c55e; box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
         .escudo-equipo { width: 56px; height: 56px; object-fit: contain; }
         
+        .btn-descargar {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-descargar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+        }
+        
+        .btn-admin {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-admin:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+        
+        .input-goles {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            width: 80px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .input-goles:focus {
+            outline: none;
+            border-color: #22c55e;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
         /* Mobile optimization */
         @media (max-width: 640px) {
             .hero-bg {
@@ -44,6 +82,7 @@
                 background-attachment: scroll;
             }
             .escudo-equipo { width: 40px; height: 40px; }
+            .input-goles { width: 60px; font-size: 14px; }
         }
         
         /* Landscape mobile */
@@ -70,6 +109,54 @@
             <p class="text-slate-400 tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[8px] sm:text-[10px] mt-2 sm:mt-4 font-bold">TEMPORADA 2026 | Torneo Los Pibes 6+6</p>
         </header>
 
+        <!-- Botón Admin (esquina superior derecha) -->
+        <div class="fixed top-4 right-4 z-50">
+            <button onclick="toggleAdmin()" class="btn-admin px-3 sm:px-4 py-2 sm:py-3 rounded-xl font-bold text-xs sm:text-sm text-white">
+                🔐 ADMIN
+            </button>
+        </div>
+
+        <!-- Panel de Administración -->
+        <div id="admin-panel" class="hidden mb-6 glass rounded-2xl p-4 sm:p-6 border-2 border-red-500">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl sm:text-2xl font-bold text-red-400">Panel de Administración</h2>
+                <button onclick="toggleAdmin()" class="text-red-400 hover:text-red-300 text-2xl">&times;</button>
+            </div>
+            
+            <div class="mb-4">
+                <label class="text-sm font-bold text-slate-300 mb-2 block">Contraseña Admin:</label>
+                <input type="password" id="admin-password" class="input-goles w-full max-w-xs" placeholder="Ingresa contraseña">
+                <button onclick="verificarPassword()" class="ml-2 bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-bold text-sm">
+                    Acceder
+                </button>
+            </div>
+
+            <div id="admin-content" class="hidden">
+                <!-- Selector de Temporada -->
+                <div class="mb-6">
+                    <label class="text-sm font-bold text-slate-300 mb-2 block">Temporada:</label>
+                    <div class="flex gap-2 mb-4">
+                        <button onclick="cambiarTemporadaAdmin('Apertura')" id="btn-temp-Apertura" class="px-6 py-2 rounded-xl font-bold text-sm transition-all bg-white/10 hover:bg-white/20">Apertura</button>
+                        <button onclick="cambiarTemporadaAdmin('Clausura')" id="btn-temp-Clausura" class="px-6 py-2 rounded-xl font-bold text-sm transition-all bg-white/10 hover:bg-white/20">Clausura</button>
+                    </div>
+                </div>
+
+                <!-- Lista de Jugadores -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="admin-jugadores">
+                    <!-- Se llena dinámicamente -->
+                </div>
+
+                <div class="mt-6 flex gap-3">
+                    <button onclick="guardarGoles()" class="bg-green-500 hover:bg-green-600 px-6 py-3 rounded-xl font-bold text-sm flex-1">
+                        💾 Guardar Cambios
+                    </button>
+                    <button onclick="resetearGoles()" class="bg-red-500 hover:bg-red-600 px-6 py-3 rounded-xl font-bold text-sm">
+                        🗑️ Resetear
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Selector de Torneo -->
         <div class="flex justify-center mb-3 sm:mb-6 bg-white/5 p-1 rounded-2xl w-fit mx-auto border border-white/10">
             <button onclick="cambiarTorneo('Apertura')" id="btn-torneo-Apertura" class="px-6 sm:px-8 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Apertura</button>
@@ -91,45 +178,87 @@
 
         <!-- Contenedor de Tabla -->
         <div id="tabla-container" class="hidden">
-            <div class="glass rounded-xl sm:rounded-2xl overflow-x-auto">
-                <table class="w-full text-sm sm:text-base">
-                    <thead class="bg-white/5">
-                        <tr class="text-[10px] sm:text-sm text-slate-400 uppercase tracking-wider">
-                            <th class="py-2 sm:py-4 px-2 sm:px-4 text-left">Pos</th>
-                            <th class="py-2 sm:py-4 px-2 sm:px-4 text-left">Equipo</th>
-                            <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">PJ</th>
-                            <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">PG</th>
-                            <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">PE</th>
-                            <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">PP</th>
-                            <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">GF</th>
-                            <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">GC</th>
-                            <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">DIF</th>
-                            <th class="py-2 sm:py-4 px-1 sm:px-3 text-center font-bold">PTS</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-body">
-                        <!-- Se llena dinámicamente -->
-                    </tbody>
-                </table>
+            <!-- Botón de descarga -->
+            <div class="flex justify-end mb-3">
+                <button onclick="descargarTabla()" class="btn-descargar px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Descargar JPG
+                </button>
+            </div>
+            
+            <div id="tabla-captura" style="background: linear-gradient(to bottom, rgba(2, 6, 23, 0.85), rgba(2, 6, 23, 0.95)), url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2000&auto=format&fit=crop'); background-size: cover; background-position: center;" class="rounded-xl sm:rounded-2xl p-6 sm:p-8">
+                <!-- Encabezado de la imagen -->
+                <div class="text-center mb-6">
+                    <h2 class="text-3xl sm:text-5xl font-black italic uppercase tracking-tighter leading-none mb-2" style="font-family: 'Oswald';">
+                        LOS PIBES <span class="text-green-500">6+6</span>
+                    </h2>
+                    <p class="text-slate-300 tracking-[0.2em] uppercase text-xs sm:text-sm font-bold">TABLA DE POSICIONES</p>
+                    <p class="text-slate-400 tracking-widest uppercase text-[10px] mt-1 font-bold" id="torneo-nombre-tabla">TORNEO APERTURA 2026</p>
+                </div>
+                
+                <div class="glass rounded-xl sm:rounded-2xl overflow-x-auto">
+                    <table class="w-full text-sm sm:text-base">
+                        <thead class="bg-white/5">
+                            <tr class="text-[10px] sm:text-sm text-slate-400 uppercase tracking-wider">
+                                <th class="py-2 sm:py-4 px-2 sm:px-4 text-left">Pos</th>
+                                <th class="py-2 sm:py-4 px-2 sm:px-4 text-left">Equipo</th>
+                                <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">PJ</th>
+                                <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">PG</th>
+                                <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">PE</th>
+                                <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">PP</th>
+                                <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">GF</th>
+                                <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">GC</th>
+                                <th class="py-2 sm:py-4 px-1 sm:px-3 text-center">DIF</th>
+                                <th class="py-2 sm:py-4 px-1 sm:px-3 text-center font-bold">PTS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-body">
+                            <!-- Se llena dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <!-- Contenedor de Goleadores -->
         <div id="goleadores-container" class="hidden">
-            <div class="glass rounded-xl sm:rounded-2xl overflow-x-auto">
-                <table class="w-full text-sm sm:text-base">
-                    <thead class="bg-white/5">
-                        <tr class="text-[10px] sm:text-sm text-slate-400 uppercase tracking-wider">
-                            <th class="py-2 sm:py-4 px-2 sm:px-4 text-left">Pos</th>
-                            <th class="py-2 sm:py-4 px-2 sm:px-4 text-left">Jugador</th>
-                            <th class="py-2 sm:py-4 px-2 sm:px-4 text-left">Equipo</th>
-                            <th class="py-2 sm:py-4 px-2 sm:px-4 text-center font-bold">⚽ Goles</th>
-                        </tr>
-                    </thead>
-                    <tbody id="goleadores-body">
-                        <!-- Se llena dinámicamente -->
-                    </tbody>
-                </table>
+            <!-- Botón de descarga -->
+            <div class="flex justify-end mb-3">
+                <button onclick="descargarGoleadores()" class="btn-descargar px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Descargar JPG
+                </button>
+            </div>
+            
+            <div id="goleadores-captura" style="background: linear-gradient(to bottom, rgba(2, 6, 23, 0.85), rgba(2, 6, 23, 0.95)), url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2000&auto=format&fit=crop'); background-size: cover; background-position: center;" class="rounded-xl sm:rounded-2xl p-6 sm:p-8">
+                <!-- Encabezado de la imagen -->
+                <div class="text-center mb-6">
+                    <h2 class="text-3xl sm:text-5xl font-black italic uppercase tracking-tighter leading-none mb-2" style="font-family: 'Oswald';">
+                        LOS PIBES <span class="text-green-500">6+6</span>
+                    </h2>
+                    <p class="text-slate-300 tracking-[0.2em] uppercase text-xs sm:text-sm font-bold">TABLA DE GOLEADORES</p>
+                    <p class="text-slate-400 tracking-widest uppercase text-[10px] mt-1 font-bold">TEMPORADA 2026</p>
+                </div>
+                
+                <div class="glass rounded-xl sm:rounded-2xl overflow-x-auto">
+                    <table class="w-full text-sm sm:text-base">
+                        <thead class="bg-white/5">
+                            <tr class="text-[10px] sm:text-sm text-slate-400 uppercase tracking-wider">
+                                <th class="py-2 sm:py-4 px-2 sm:px-4 text-left">Pos</th>
+                                <th class="py-2 sm:py-4 px-2 sm:px-4 text-left">Jugador</th>
+                                <th class="py-2 sm:py-4 px-2 sm:px-4 text-left">Equipo</th>
+                                <th class="py-2 sm:py-4 px-2 sm:px-4 text-center font-bold">⚽ Goles</th>
+                            </tr>
+                        </thead>
+                        <tbody id="goleadores-body">
+                            <!-- Se llena dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -138,10 +267,43 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbw675NO52ucINehQlIo1xJcHfr7Jd-uAIi6dvhitcB0aApt_5bRBu_2UI_avNwWxdf2/exec";
         const ESCUDO_VASTAGO = "https://nqnciudad.github.io/torneo6-6/imagen/escudo-vastago.png";
         const ESCUDO_NACIONAL = "https://nqnciudad.github.io/torneo6-6/imagen/escudo-nacional.png";
+        const ADMIN_PASSWORD = "pibes2026"; // Cambia esto por tu contraseña
         
         let torneoActual = 'Apertura';
         let vistaActual = 'proxima';
         let datosActuales = [];
+        let temporadaAdmin = 'Apertura';
+        let adminAutenticado = false;
+
+        // Base de datos de jugadores
+        const jugadoresDB = {
+            "Vástago F.C.": [
+                { nombre: "Gabriel 'El Capi' Abas", apodo: "El Capi" },
+                { nombre: "Maty 'El Picante' Pereyra", apodo: "El Picante" },
+                { nombre: "Chano 'El Buda' Bertoni", apodo: "El Buda" },
+                { nombre: "Jona 'El Muro' Cheves", apodo: "El Muro" },
+                { nombre: "Christian 'El Rengo' Corti", apodo: "El Rengo" },
+                { nombre: "Andy 'El Pela' Soto", apodo: "El Pela" },
+                { nombre: "Carlos 'Mágico' Lucero", apodo: "Mágico" },
+                { nombre: "Pablito 'El Tucu' Figueroa Alcorta", apodo: "El Tucu" },
+                { nombre: "Julián 'La Joya' Ibáñez", apodo: "La Joya" },
+                { nombre: "Juan 'La Esperanza' De Giorgis", apodo: "La Esperanza" },
+                { nombre: "Gabriel 'El Zurdo' Alonso", apodo: "El Zurdo" }
+            ],
+            "Nacional F.C.": [
+                { nombre: "Franco 'Matio' Matievich", apodo: "Matio" },
+                { nombre: "Ricardo 'La Chancha' Mendoza", apodo: "La Chancha" },
+                { nombre: "Fernando 'Me Lesiono' Dominguez", apodo: "Me Lesiono" },
+                { nombre: "Pablo 'Caballo' Jorgensen", apodo: "Caballo" },
+                { nombre: "Rodrigo 'Zerafo' Gatti", apodo: "Zerafo" },
+                { nombre: "Jose 'Gambeta' Gatica", apodo: "Gambeta" },
+                { nombre: "Pedro 'El Barba' Oliver", apodo: "El Barba" },
+                { nombre: "Damian 'Damiao' Moller", apodo: "Damiao" },
+                { nombre: "Javier 'El Profe' Llarena", apodo: "El Profe" },
+                { nombre: "Gerardo 'Cariñoso' Esperanza", apodo: "Cariñoso" },
+                { nombre: "Andres 'La Tripa' Fernández", apodo: "La Tripa" }
+            ]
+        };
 
         function obtenerInfoEquipo(nombreEquipo) {
             if (nombreEquipo.includes("Vástago")) {
@@ -152,10 +314,115 @@
             return { escudo: null, clase: "", borderColor: "border-transparent", bgColor: "" };
         }
 
+        // Funciones de Admin
+        function toggleAdmin() {
+            const panel = document.getElementById('admin-panel');
+            panel.classList.toggle('hidden');
+            if (!panel.classList.contains('hidden') && adminAutenticado) {
+                cargarPanelAdmin();
+            }
+        }
+
+        function verificarPassword() {
+            const password = document.getElementById('admin-password').value;
+            if (password === ADMIN_PASSWORD) {
+                adminAutenticado = true;
+                document.getElementById('admin-content').classList.remove('hidden');
+                cargarPanelAdmin();
+            } else {
+                alert('❌ Contraseña incorrecta');
+            }
+        }
+
+        function cambiarTemporadaAdmin(temp) {
+            temporadaAdmin = temp;
+            document.querySelectorAll('[id^="btn-temp-"]').forEach(b => b.classList.remove('btn-activo'));
+            document.getElementById('btn-temp-' + temp).classList.add('btn-activo');
+            cargarPanelAdmin();
+        }
+
+        function cargarPanelAdmin() {
+            const container = document.getElementById('admin-jugadores');
+            container.innerHTML = '';
+            
+            const golesGuardados = JSON.parse(localStorage.getItem('goles_' + temporadaAdmin) || '{}');
+            
+            Object.keys(jugadoresDB).forEach(equipo => {
+                const info = obtenerInfoEquipo(equipo);
+                
+                const equipoDiv = document.createElement('div');
+                equipoDiv.className = 'glass rounded-xl p-4 border-l-4 ' + info.borderColor;
+                equipoDiv.innerHTML = `
+                    <div class="flex items-center gap-2 mb-4">
+                        ${info.escudo ? `<img src="${info.escudo}" class="w-10 h-10">` : ''}
+                        <h3 class="font-bold text-lg ${info.clase}">${equipo}</h3>
+                    </div>
+                    <div class="space-y-2">
+                        ${jugadoresDB[equipo].map(jugador => {
+                            const key = equipo + '|' + jugador.nombre;
+                            const goles = golesGuardados[key] || 0;
+                            return `
+                                <div class="flex justify-between items-center bg-white/5 p-2 rounded-lg">
+                                    <span class="text-sm font-medium">${jugador.nombre}</span>
+                                    <input type="number" 
+                                           class="input-goles" 
+                                           id="goles-${key.replace(/[^a-zA-Z0-9]/g, '_')}"
+                                           value="${goles}" 
+                                           min="0"
+                                           data-key="${key}">
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                container.appendChild(equipoDiv);
+            });
+            
+            // Activar botón de temporada
+            document.querySelectorAll('[id^="btn-temp-"]').forEach(b => b.classList.remove('btn-activo'));
+            document.getElementById('btn-temp-' + temporadaAdmin).classList.add('btn-activo');
+        }
+
+        function guardarGoles() {
+            const goles = {};
+            const inputs = document.querySelectorAll('.input-goles[data-key]');
+            
+            inputs.forEach(input => {
+                const key = input.getAttribute('data-key');
+                const valor = parseInt(input.value) || 0;
+                if (valor > 0) {
+                    goles[key] = valor;
+                }
+            });
+            
+            localStorage.setItem('goles_' + temporadaAdmin, JSON.stringify(goles));
+            alert('✅ Goles guardados correctamente para ' + temporadaAdmin);
+            
+            // Recargar goleadores si estamos en esa vista
+            if (vistaActual === 'goleadores') {
+                cargarGoleadoresLocal();
+            }
+        }
+
+        function resetearGoles() {
+            if (confirm('⚠️ ¿Estás seguro de que quieres resetear TODOS los goles de ' + temporadaAdmin + '?')) {
+                localStorage.removeItem('goles_' + temporadaAdmin);
+                cargarPanelAdmin();
+                alert('✅ Goles reseteados');
+            }
+        }
+
         function cambiarTorneo(torneo) {
             torneoActual = torneo;
             document.querySelectorAll('[id^="btn-torneo-"]').forEach(b => b.classList.remove('btn-activo'));
             document.getElementById('btn-torneo-' + torneo).classList.add('btn-activo');
+            
+            // Actualizar el nombre del torneo en el encabezado de la tabla
+            const nombreTorneo = document.getElementById('torneo-nombre-tabla');
+            if (nombreTorneo) {
+                nombreTorneo.textContent = `TORNEO ${torneo.toUpperCase()} 2026`;
+            }
+            
             cargarDatos();
         }
 
@@ -173,7 +440,7 @@
                 generarTabla();
             } else if (vista === 'goleadores') {
                 document.getElementById('goleadores-container').classList.remove('hidden');
-                cargarGoleadores();
+                cargarGoleadoresLocal();
             } else {
                 document.getElementById('partidos-container').classList.remove('hidden');
                 mostrarPartidos();
@@ -198,7 +465,7 @@
                 if (vistaActual === 'tabla') {
                     generarTabla();
                 } else if (vistaActual === 'goleadores') {
-                    cargarGoleadores();
+                    cargarGoleadoresLocal();
                 } else {
                     mostrarPartidos();
                 }
@@ -208,61 +475,70 @@
             }
         }
 
-        async function cargarGoleadores() {
+        function cargarGoleadoresLocal() {
             const container = document.getElementById('goleadores-body');
             container.innerHTML = '<tr><td colspan="4" class="py-10 text-center text-slate-400 italic text-sm">Cargando goleadores...</td></tr>';
             
-            try {
-                const response = await fetch(API_URL + "?accion=goleadores&t=" + new Date().getTime());
-                const goleadores = await response.json();
-                
-                if (goleadores.error) {
-                    container.innerHTML = `<tr><td colspan="4" class="p-4 text-red-400 font-medium text-sm text-center">${goleadores.error}</td></tr>`;
-                    return;
+            // Combinar goles de Apertura y Clausura
+            const golesApertura = JSON.parse(localStorage.getItem('goles_Apertura') || '{}');
+            const golesClausura = JSON.parse(localStorage.getItem('goles_Clausura') || '{}');
+            
+            const goleadoresArray = [];
+            
+            // Procesar goles de Apertura
+            Object.keys(golesApertura).forEach(key => {
+                const [equipo, nombre] = key.split('|');
+                goleadoresArray.push({
+                    Jugador: nombre,
+                    Equipo: equipo,
+                    Goles: golesApertura[key]
+                });
+            });
+            
+            // Procesar goles de Clausura
+            Object.keys(golesClausura).forEach(key => {
+                const [equipo, nombre] = key.split('|');
+                const existente = goleadoresArray.find(g => g.Jugador === nombre);
+                if (existente) {
+                    existente.Goles += golesClausura[key];
+                } else {
+                    goleadoresArray.push({
+                        Jugador: nombre,
+                        Equipo: equipo,
+                        Goles: golesClausura[key]
+                    });
                 }
-
-                const jugadoresMap = {};
-                
-                goleadores.forEach(goleador => {
-                    const jugador = goleador.Jugador;
-                    const equipo = goleador.Equipo;
-                    const goles = parseInt(goleador.Goles) || 0;
-                    
-                    if (!jugadoresMap[jugador]) {
-                        jugadoresMap[jugador] = { Jugador: jugador, Equipo: equipo, Goles: 0 };
-                    }
-                    
-                    jugadoresMap[jugador].Goles += goles;
-                });
-                
-                const goleadoresAgrupados = Object.values(jugadoresMap).sort((a, b) => b.Goles - a.Goles);
-                
-                container.innerHTML = "";
-                
-                goleadoresAgrupados.forEach((goleador, index) => {
-                    const info = obtenerInfoEquipo(goleador.Equipo);
-                    
-                    const equipoHTML = info.escudo
-                        ? `<div class="flex items-center gap-2">
-                            <img src="${info.escudo}" alt="${goleador.Equipo}" class="escudo-equipo">
-                            <span class="${info.clase}">${goleador.Equipo}</span>
-                           </div>`
-                        : goleador.Equipo;
-                    
-                    container.innerHTML += `
-                        <tr class="border-t border-white/5 hover:bg-white/5 transition-colors ${info.bgColor}">
-                            <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-slate-400 text-xs sm:text-base">${index + 1}</td>
-                            <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-xs sm:text-lg ${info.clase}">${goleador.Jugador}</td>
-                            <td class="py-2 sm:py-4 px-2 sm:px-4 text-xs sm:text-base">${equipoHTML}</td>
-                            <td class="py-2 sm:py-4 px-2 sm:px-4 text-center font-black text-lg sm:text-2xl text-green-400">${goleador.Goles}</td>
-                        </tr>
-                    `;
-                });
-                
-            } catch (error) {
-                console.error(error);
-                container.innerHTML = '<tr><td colspan="4" class="p-4 text-red-400 text-sm text-center">Error al cargar goleadores</td></tr>';
+            });
+            
+            // Ordenar por goles
+            goleadoresArray.sort((a, b) => b.Goles - a.Goles);
+            
+            container.innerHTML = "";
+            
+            if (goleadoresArray.length === 0) {
+                container.innerHTML = '<tr><td colspan="4" class="py-10 text-center text-slate-400 italic text-sm">No hay goleadores registrados. Usa el panel de administración para cargar datos.</td></tr>';
+                return;
             }
+            
+            goleadoresArray.forEach((goleador, index) => {
+                const info = obtenerInfoEquipo(goleador.Equipo);
+                
+                const equipoHTML = info.escudo
+                    ? `<div class="flex items-center gap-2">
+                        <img src="${info.escudo}" alt="${goleador.Equipo}" class="escudo-equipo">
+                        <span class="${info.clase}">${goleador.Equipo}</span>
+                       </div>`
+                    : goleador.Equipo;
+                
+                container.innerHTML += `
+                    <tr class="border-t border-white/5 hover:bg-white/5 transition-colors ${info.bgColor}">
+                        <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-slate-400 text-xs sm:text-base">${index + 1}</td>
+                        <td class="py-2 sm:py-4 px-2 sm:px-4 font-bold text-xs sm:text-lg ${info.clase}">${goleador.Jugador}</td>
+                        <td class="py-2 sm:py-4 px-2 sm:px-4 text-xs sm:text-base">${equipoHTML}</td>
+                        <td class="py-2 sm:py-4 px-2 sm:px-4 text-center font-black text-lg sm:text-2xl text-green-400">${goleador.Goles}</td>
+                    </tr>
+                `;
+            });
         }
 
         function mostrarPartidos() {
@@ -421,6 +697,112 @@
                     </tr>
                 `;
             });
+        }
+
+        // Función para descargar la tabla de posiciones
+        async function descargarTabla() {
+            const elemento = document.getElementById('tabla-captura');
+            const boton = event.target.closest('button');
+            
+            // Deshabilitar el botón y mostrar estado de carga
+            boton.disabled = true;
+            boton.innerHTML = '<span class="animate-pulse">Generando imagen...</span>';
+            
+            try {
+                const canvas = await html2canvas(elemento, {
+                    backgroundColor: '#020617',
+                    scale: 2,
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: true
+                });
+                
+                // Convertir a JPG
+                canvas.toBlob(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    const fecha = new Date().toISOString().split('T')[0];
+                    link.download = `LOS_PIBES_6+6_Tabla_${torneoActual}_${fecha}.jpg`;
+                    link.href = url;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                    
+                    // Restaurar el botón
+                    boton.disabled = false;
+                    boton.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Descargar JPG
+                    `;
+                }, 'image/jpeg', 0.95);
+                
+            } catch (error) {
+                console.error('Error al generar la imagen:', error);
+                alert('Error al generar la imagen. Por favor intenta nuevamente.');
+                
+                // Restaurar el botón
+                boton.disabled = false;
+                boton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Descargar JPG
+                `;
+            }
+        }
+
+        // Función para descargar la tabla de goleadores
+        async function descargarGoleadores() {
+            const elemento = document.getElementById('goleadores-captura');
+            const boton = event.target.closest('button');
+            
+            // Deshabilitar el botón y mostrar estado de carga
+            boton.disabled = true;
+            boton.innerHTML = '<span class="animate-pulse">Generando imagen...</span>';
+            
+            try {
+                const canvas = await html2canvas(elemento, {
+                    backgroundColor: '#020617',
+                    scale: 2,
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: true
+                });
+                
+                // Convertir a JPG
+                canvas.toBlob(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    const fecha = new Date().toISOString().split('T')[0];
+                    link.download = `LOS_PIBES_6+6_Goleadores_${fecha}.jpg`;
+                    link.href = url;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                    
+                    // Restaurar el botón
+                    boton.disabled = false;
+                    boton.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Descargar JPG
+                    `;
+                }, 'image/jpeg', 0.95);
+                
+            } catch (error) {
+                console.error('Error al generar la imagen:', error);
+                alert('Error al generar la imagen. Por favor intenta nuevamente.');
+                
+                // Restaurar el botón
+                boton.disabled = false;
+                boton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Descargar JPG
+                `;
+            }
         }
 
         cambiarTorneo('Apertura');
