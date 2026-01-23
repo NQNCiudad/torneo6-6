@@ -781,76 +781,126 @@
             }
         }
 
-        function guardarNoticia(tipo, titulo, contenido, imagenBase64) {
-            const noticias = JSON.parse(localStorage.getItem('noticias') || '[]');
-            
-            const noticia = {
-                id: Date.now(),
-                tipo: tipo,
-                titulo: titulo,
-                contenido: contenido,
-                imagen: imagenBase64,
-                fecha: new Date().toISOString()
-            };
-            
-            noticias.unshift(noticia);
-            localStorage.setItem('noticias', JSON.stringify(noticias));
-            
-            // Limpiar campos
-            document.getElementById('titulo-noticia').value = '';
-            document.getElementById('contenido-noticia').value = '';
-            document.getElementById('imagen-noticia').value = '';
-            const previewDiv = document.getElementById('preview-imagen');
-            if (previewDiv) previewDiv.classList.add('hidden');
-            
-            // Actualizar listas
-            cargarNoticiasAdmin();
-            mostrarNoticias();
-            
-            alert('✅ Noticia publicada correctamente');
+        async function guardarNoticia(tipo, titulo, contenido, imagenBase64) {
+            try {
+                const noticia = {
+                    id: Date.now(),
+                    tipo: tipo,
+                    titulo: titulo,
+                    contenido: contenido,
+                    imagen: imagenBase64 || '',
+                    fecha: new Date().toISOString()
+                };
+                
+                // Guardar en Google Sheets
+                const formData = new URLSearchParams();
+                formData.append('accion', 'guardarNoticia');
+                formData.append('id', noticia.id);
+                formData.append('tipo', noticia.tipo);
+                formData.append('titulo', noticia.titulo);
+                formData.append('contenido', noticia.contenido);
+                formData.append('imagen', noticia.imagen);
+                formData.append('fecha', noticia.fecha);
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Limpiar campos
+                    document.getElementById('titulo-noticia').value = '';
+                    document.getElementById('contenido-noticia').value = '';
+                    document.getElementById('imagen-noticia').value = '';
+                    const previewDiv = document.getElementById('preview-imagen');
+                    if (previewDiv) previewDiv.classList.add('hidden');
+                    
+                    // Actualizar listas
+                    cargarNoticiasAdmin();
+                    mostrarNoticias();
+                    
+                    alert('✅ Noticia publicada correctamente');
+                } else {
+                    alert('❌ Error al guardar: ' + (result.error || 'Error desconocido'));
+                }
+            } catch (error) {
+                console.error('Error guardando noticia:', error);
+                alert('❌ Error de conexión al guardar la noticia');
+            }
         }
 
-        function eliminarNoticia(id) {
+        async function eliminarNoticia(id) {
             if (!confirm('¿Estás seguro de eliminar esta noticia?')) {
                 return;
             }
             
-            let noticias = JSON.parse(localStorage.getItem('noticias') || '[]');
-            noticias = noticias.filter(n => n.id !== id);
-            localStorage.setItem('noticias', JSON.stringify(noticias));
-            
-            cargarNoticiasAdmin();
-            mostrarNoticias(); // Recargar carrusel
-            
-            alert('✅ Noticia eliminada');
+            try {
+                const formData = new URLSearchParams();
+                formData.append('accion', 'eliminarNoticia');
+                formData.append('id', id);
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    cargarNoticiasAdmin();
+                    mostrarNoticias();
+                    alert('✅ Noticia eliminada');
+                } else {
+                    alert('❌ Error al eliminar: ' + (result.error || 'Error desconocido'));
+                }
+            } catch (error) {
+                console.error('Error eliminando noticia:', error);
+                alert('❌ Error de conexión al eliminar la noticia');
+            }
         }
 
-        function cargarNoticiasAdmin() {
+        async function cargarNoticiasAdmin() {
             const container = document.getElementById('admin-noticias-lista');
-            const noticias = JSON.parse(localStorage.getItem('noticias') || '[]');
             
-            if (noticias.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">No hay noticias publicadas</p>';
-                return;
-            }
-            
-            container.innerHTML = noticias.map(noticia => {
-                const iconos = {
-                    transferencia: '🔄',
-                    gol: '⚽',
-                    lesion: '🏥',
-                    general: '📢'
-                };
+            try {
+                const response = await fetch(API_URL + '?accion=obtenerNoticias&t=' + new Date().getTime());
+                const noticias = await response.json();
                 
-                return `
-                    <div class="bg-white/10 p-2 rounded text-xs">
-                        <div class="flex justify-between items-start gap-2">
-                            <span class="font-bold">${iconos[noticia.tipo]} ${noticia.titulo}</span>
-                            <button onclick="eliminarNoticia(${noticia.id})" class="text-red-400 hover:text-red-300">🗑️</button>
+                if (noticias.error) {
+                    container.innerHTML = '<p class="text-xs text-red-400 text-center py-2">' + noticias.error + '</p>';
+                    return;
+                }
+                
+                if (noticias.length === 0) {
+                    container.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">No hay noticias publicadas</p>';
+                    return;
+                }
+                
+                container.innerHTML = noticias.map(noticia => {
+                    const iconos = {
+                        transferencia: '🔄',
+                        gol: '⚽',
+                        lesion: '🏥',
+                        general: '📢'
+                    };
+                    
+                    const tieneImagen = noticia.imagen && noticia.imagen.trim() !== '';
+                    
+                    return `
+                        <div class="bg-white/10 p-2 rounded text-xs">
+                            <div class="flex justify-between items-start gap-2">
+                                <span class="font-bold">${iconos[noticia.tipo] || '📢'} ${noticia.titulo} ${tieneImagen ? '🖼️' : ''}</span>
+                                <button onclick="eliminarNoticia(${noticia.id})" class="text-red-400 hover:text-red-300">🗑️</button>
+                            </div>
                         </div>
-                    </div>
-                `;
-            }).join('');
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error cargando noticias admin:', error);
+                container.innerHTML = '<p class="text-xs text-red-400 text-center py-2">Error cargando noticias</p>';
+            }
         }
 
         function mostrarNoticias() {
@@ -858,37 +908,50 @@
         }
 
         async function cargarTodasLasNoticias() {
-            // Obtener noticias del torneo
-            const noticiasLocales = JSON.parse(localStorage.getItem('noticias') || '[]');
-            console.log('Noticias locales cargadas:', noticiasLocales.length, noticiasLocales);
-            
-            // Obtener noticias de fútbol general
-            const noticiasFutbol = await obtenerNoticiasFutbol();
-            console.log('Noticias de fútbol cargadas:', noticiasFutbol.length, noticiasFutbol);
-            
-            // Combinar todas las noticias
-            todasLasNoticias = [
-                ...noticiasLocales.map(n => ({ ...n, origen: 'torneo' })),
-                ...noticiasFutbol.map(n => ({ ...n, origen: 'futbol' }))
-            ];
-            
-            console.log('Total noticias combinadas:', todasLasNoticias.length, todasLasNoticias);
-            
-            if (todasLasNoticias.length === 0) {
+            try {
+                // Obtener noticias del torneo desde Google Sheets
+                const response = await fetch(API_URL + '?accion=obtenerNoticias&t=' + new Date().getTime());
+                const noticiasLocales = await response.json();
+                
+                console.log('Noticias locales cargadas:', noticiasLocales.length, noticiasLocales);
+                
+                // Obtener noticias de fútbol general
+                const noticiasFutbol = await obtenerNoticiasFutbol();
+                console.log('Noticias de fútbol cargadas:', noticiasFutbol.length, noticiasFutbol);
+                
+                // Combinar todas las noticias
+                todasLasNoticias = [
+                    ...(Array.isArray(noticiasLocales) ? noticiasLocales.map(n => ({ ...n, origen: 'torneo' })) : []),
+                    ...noticiasFutbol.map(n => ({ ...n, origen: 'futbol' }))
+                ];
+                
+                console.log('Total noticias combinadas:', todasLasNoticias.length, todasLasNoticias);
+                
+                if (todasLasNoticias.length === 0) {
+                    document.getElementById('noticias-carrusel').innerHTML = `
+                        <div class="glass rounded-2xl p-8 text-center">
+                            <div class="text-6xl mb-4">📰</div>
+                            <h3 class="text-xl font-bold text-slate-300 mb-2">No hay noticias todavía</h3>
+                            <p class="text-slate-400 text-sm">Las noticias aparecerán aquí</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Iniciar carrusel
+                noticiaActualIndex = 0;
+                mostrarNoticiaActual();
+                iniciarCarruselAutomatico();
+            } catch (error) {
+                console.error('Error cargando todas las noticias:', error);
                 document.getElementById('noticias-carrusel').innerHTML = `
                     <div class="glass rounded-2xl p-8 text-center">
-                        <div class="text-6xl mb-4">📰</div>
-                        <h3 class="text-xl font-bold text-slate-300 mb-2">No hay noticias todavía</h3>
-                        <p class="text-slate-400 text-sm">Las noticias aparecerán aquí</p>
+                        <div class="text-6xl mb-4">❌</div>
+                        <h3 class="text-xl font-bold text-red-400 mb-2">Error cargando noticias</h3>
+                        <p class="text-slate-400 text-sm">${error.message}</p>
                     </div>
                 `;
-                return;
             }
-            
-            // Iniciar carrusel
-            noticiaActualIndex = 0;
-            mostrarNoticiaActual();
-            iniciarCarruselAutomatico();
         }
 
         async function obtenerNoticiasFutbol() {
@@ -1129,31 +1192,38 @@
             mostrarNoticiaActual();
         }
 
-        function mostrarDebugNoticias() {
-            const noticiasLocales = JSON.parse(localStorage.getItem('noticias') || '[]');
-            
-            let info = `🐛 DEBUG DE NOTICIAS\n\n`;
-            info += `📊 NOTICIAS LOCALES (guardadas): ${noticiasLocales.length}\n\n`;
-            
-            noticiasLocales.forEach((n, i) => {
-                info += `--- Local ${i + 1} ---\n`;
-                info += `Tipo: ${n.tipo}\n`;
-                info += `Título: ${n.titulo.substring(0, 40)}\n`;
-                info += `Tiene imagen: ${n.imagen ? 'SÍ - ' + n.imagen.substring(0, 30) + '...' : 'NO'}\n\n`;
-            });
-            
-            info += `\n📰 CARRUSEL ACTUAL: ${todasLasNoticias.length} noticias\n\n`;
-            
-            todasLasNoticias.forEach((n, i) => {
-                const imgStatus = n.imagen ? '🖼️' : '📄';
-                info += `${i + 1}. ${imgStatus} ${n.titulo.substring(0, 35)}... [${n.origen}]\n`;
-            });
-            
-            alert(info);
-            
-            // También mostrar en consola para más detalles
-            console.log('=== NOTICIAS LOCALES ===', noticiasLocales);
-            console.log('=== TODAS LAS NOTICIAS ===', todasLasNoticias);
+        async function mostrarDebugNoticias() {
+            try {
+                const response = await fetch(API_URL + '?accion=obtenerNoticias&t=' + new Date().getTime());
+                const noticiasLocales = await response.json();
+                
+                let info = `🐛 DEBUG DE NOTICIAS\n\n`;
+                info += `📊 NOTICIAS LOCALES (Google Sheets): ${Array.isArray(noticiasLocales) ? noticiasLocales.length : 0}\n\n`;
+                
+                if (Array.isArray(noticiasLocales)) {
+                    noticiasLocales.forEach((n, i) => {
+                        info += `--- Local ${i + 1} ---\n`;
+                        info += `Tipo: ${n.tipo}\n`;
+                        info += `Título: ${n.titulo ? n.titulo.substring(0, 40) : 'Sin título'}\n`;
+                        info += `Tiene imagen: ${n.imagen && n.imagen.trim() !== '' ? 'SÍ (Base64)' : 'NO'}\n\n`;
+                    });
+                }
+                
+                info += `\n📰 CARRUSEL ACTUAL: ${todasLasNoticias.length} noticias\n\n`;
+                
+                todasLasNoticias.forEach((n, i) => {
+                    const imgStatus = (n.imagen && n.imagen.trim() !== '') ? '🖼️' : '📄';
+                    info += `${i + 1}. ${imgStatus} ${n.titulo ? n.titulo.substring(0, 35) : 'Sin título'}... [${n.origen}]\n`;
+                });
+                
+                alert(info);
+                
+                // También mostrar en consola para más detalles
+                console.log('=== NOTICIAS LOCALES (Sheets) ===', noticiasLocales);
+                console.log('=== TODAS LAS NOTICIAS ===', todasLasNoticias);
+            } catch (error) {
+                alert('❌ Error obteniendo debug:\n' + error.message);
+            }
         }
 
         // Funciones del carrusel de fotos
