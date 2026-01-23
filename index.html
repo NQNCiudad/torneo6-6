@@ -259,7 +259,10 @@
 
         <!-- Contenedor de Fixture/Próxima Fecha -->
         <div id="partidos-container" class="space-y-3 sm:space-y-5 text-center">
-            <div class="animate-pulse text-slate-500 text-xs sm:text-sm italic font-medium tracking-widest">Sincronizando con planilla...</div>
+            <div class="glass rounded-xl p-6">
+                <div class="text-4xl mb-3">⚽</div>
+                <p class="text-slate-400 text-sm">Cargando información del torneo...</p>
+            </div>
         </div>
 
         <!-- Contenedor de Tabla -->
@@ -717,7 +720,10 @@
                 nombreTorneo.textContent = `TORNEO ${torneo.toUpperCase()} 2026`;
             }
             
-            cargarDatos();
+            // Solo cargar datos si la vista actual lo requiere
+            if (vistaActual !== 'goleadores') {
+                cargarDatos();
+            }
         }
 
         function cambiarVista(vista) {
@@ -739,9 +745,6 @@
                 document.getElementById('partidos-container').classList.remove('hidden');
                 mostrarPartidos();
             }
-            
-            // Las noticias siempre se muestran debajo
-            mostrarNoticias();
         }
 
         function agregarNoticia() {
@@ -1166,7 +1169,15 @@
             container.innerHTML = '<div class="py-10 text-slate-400 italic text-sm">Actualizando resultados...</div>';
             
             try {
-                const response = await fetch(API_URL + "?torneo=" + torneoActual + "&t=" + new Date().getTime());
+                // Fetch con timeout de 10 segundos
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
+                const response = await fetch(API_URL + "?torneo=" + torneoActual + "&t=" + new Date().getTime(), {
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                
                 const datos = await response.json();
                 
                 if (datos.error) {
@@ -1184,8 +1195,31 @@
                     mostrarPartidos();
                 }
             } catch (error) {
-                console.error(error);
-                container.innerHTML = `<div class="p-4 glass rounded-xl text-red-400 text-sm">Error de conexión. Revisa la consola (F12).</div>`;
+                console.error('Error cargando datos:', error);
+                
+                if (error.name === 'AbortError') {
+                    container.innerHTML = `
+                        <div class="p-6 glass rounded-xl text-center">
+                            <div class="text-4xl mb-3">⏱️</div>
+                            <p class="text-red-400 font-bold mb-2">Tiempo de espera agotado</p>
+                            <p class="text-slate-400 text-sm mb-4">No se pudo conectar con Google Sheets</p>
+                            <button onclick="cargarDatos()" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg text-white font-bold">
+                                🔄 Reintentar
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div class="p-6 glass rounded-xl text-center">
+                            <div class="text-4xl mb-3">❌</div>
+                            <p class="text-red-400 font-bold mb-2">Error de conexión</p>
+                            <p class="text-slate-400 text-sm mb-4">${error.message}</p>
+                            <button onclick="cargarDatos()" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg text-white font-bold">
+                                🔄 Reintentar
+                            </button>
+                        </div>
+                    `;
+                }
             }
         }
 
@@ -1551,10 +1585,18 @@
             }
         }
 
+        // Inicializar con goleadores (no necesita Google Sheets)
         cambiarTorneo('Apertura');
-        cambiarVista('proxima');
-        cargarJugadoresCustom(); // Cargar jugadores personalizados al inicio
-        mostrarNoticias(); // Cargar noticias al inicio
+        cambiarVista('goleadores'); // Empezar en goleadores para evitar bloqueo
+        
+        // Cargar jugadores y noticias
+        cargarJugadoresCustom();
+        mostrarNoticias();
+        
+        // Después de que todo cargó, cambiar a próxima fecha
+        setTimeout(() => {
+            cambiarVista('proxima');
+        }, 500);
         
         // Preview de imagen al seleccionar archivo
         setTimeout(() => {
