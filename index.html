@@ -1040,12 +1040,11 @@
             let imagenHTML = '';
             if (noticia.imagen) {
                 imagenHTML = `
-                    <div class="mb-4 rounded-lg overflow-hidden bg-slate-800/50">
+                    <div class="mb-4">
                         <img src="${noticia.imagen}" 
                              alt="${noticia.titulo}" 
-                             class="w-full h-auto max-h-48 sm:max-h-64 object-contain"
-                             loading="lazy"
-                             onerror="this.parentElement.style.display='none'">
+                             class="w-full rounded-lg"
+                             style="display: block; max-width: 100%;">
                     </div>
                 `;
             }
