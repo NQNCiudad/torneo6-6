@@ -255,12 +255,6 @@
             </div>
         </div>
 
-        <!-- Selector de Torneo -->
-        <div class="flex justify-center mb-3 sm:mb-6 bg-white/5 p-1 rounded-2xl w-fit mx-auto border border-white/10">
-            <button onclick="cambiarTorneo('Apertura')" id="btn-torneo-Apertura" class="px-6 sm:px-8 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Apertura</button>
-            <button onclick="cambiarTorneo('Clausura')" id="btn-torneo-Clausura" class="px-6 sm:px-8 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Clausura</button>
-        </div>
-
         <!-- Layout principal: Sidebar + Contenido -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 mb-4 sm:mb-10">
             <!-- Sidebar Izquierdo: Carrusel de Fotos (solo desktop) -->
@@ -290,6 +284,12 @@
 
             <!-- Contenido Principal -->
             <div class="lg:col-span-9">
+                <!-- Selector de Torneo -->
+                <div class="flex justify-center mb-3 sm:mb-6 bg-white/5 p-1 rounded-2xl w-fit mx-auto border border-white/10">
+                    <button onclick="cambiarTorneo('Apertura')" id="btn-torneo-Apertura" class="px-6 sm:px-8 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Apertura</button>
+                    <button onclick="cambiarTorneo('Clausura')" id="btn-torneo-Clausura" class="px-6 sm:px-8 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Clausura</button>
+                </div>
+                
                 <!-- Selector de Vista Principal -->
                 <div class="flex flex-wrap justify-center gap-1 sm:gap-2 mb-4 sm:mb-6 bg-white/5 p-1 rounded-2xl w-fit mx-auto border border-white/10 max-w-[95vw]">
                     <button onclick="cambiarVista('proxima')" id="btn-vista-proxima" class="px-2 sm:px-5 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-base transition-all whitespace-nowrap">Próxima Fecha</button>
@@ -909,7 +909,7 @@
 
         async function obtenerNoticiasFutbol() {
             try {
-                // Intentar obtener noticias de RSS feeds de sitios argentinos
+                // Intentar obtener noticias de múltiples RSS feeds de sitios argentinos
                 const noticias = [];
                 
                 // Usar un proxy CORS para acceder a los RSS feeds
@@ -920,18 +920,41 @@
                     const rssOle = await fetch(corsProxy + encodeURIComponent('https://www.ole.com.ar/rss/ultimas-noticias/'));
                     const textOle = await rssOle.text();
                     const noticiasOle = parsearRSS(textOle, 'Olé');
-                    noticias.push(...noticiasOle.slice(0, 3)); // Tomar las 3 primeras
+                    noticias.push(...noticiasOle.slice(0, 2)); // Tomar las 2 primeras
                 } catch (error) {
                     console.log('No se pudieron cargar noticias de Olé:', error);
                 }
                 
+                // RSS de TyC Sports
+                try {
+                    const rssTyc = await fetch(corsProxy + encodeURIComponent('https://www.tycsports.com/feed.xml'));
+                    const textTyc = await rssTyc.text();
+                    const noticiasTyc = parsearRSS(textTyc, 'TyC Sports');
+                    noticias.push(...noticiasTyc.slice(0, 2)); // Tomar las 2 primeras
+                } catch (error) {
+                    console.log('No se pudieron cargar noticias de TyC Sports:', error);
+                }
+                
+                // RSS de ESPN (deportes en general)
+                try {
+                    const rssEspn = await fetch(corsProxy + encodeURIComponent('https://www.espn.com.ar/espndeportes/rss'));
+                    const textEspn = await rssEspn.text();
+                    const noticiasEspn = parsearRSS(textEspn, 'ESPN');
+                    noticias.push(...noticiasEspn.slice(0, 2)); // Tomar las 2 primeras
+                } catch (error) {
+                    console.log('No se pudieron cargar noticias de ESPN:', error);
+                }
+                
                 // Si no se pudieron obtener noticias del RSS, usar noticias de ejemplo
                 if (noticias.length === 0) {
-                    console.log('Usando noticias de ejemplo porque no se pudo acceder al RSS');
+                    console.log('Usando noticias de ejemplo porque no se pudo acceder a ningún RSS');
                     return obtenerNoticiasEjemplo();
                 }
                 
-                return noticias;
+                // Mezclar noticias aleatoriamente para variedad
+                noticias.sort(() => Math.random() - 0.5);
+                
+                return noticias.slice(0, 6); // Devolver máximo 6 noticias en total
             } catch (error) {
                 console.error('Error al obtener noticias:', error);
                 // Si falla todo, retornar noticias de ejemplo
