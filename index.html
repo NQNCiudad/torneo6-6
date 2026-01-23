@@ -213,12 +213,21 @@
                             </select>
                             <input type="text" id="titulo-noticia" class="input-goles w-full" placeholder="Título de la noticia">
                             <textarea id="contenido-noticia" class="input-goles w-full h-20 resize-none" placeholder="Contenido de la noticia..."></textarea>
-                            <input type="text" id="imagen-noticia" class="input-goles w-full" placeholder="URL de imagen (opcional)">
+                            
+                            <!-- Selector de imagen -->
+                            <div class="bg-white/5 p-3 rounded-lg border border-white/20">
+                                <label class="text-xs text-slate-300 mb-2 block">📷 Imagen (opcional):</label>
+                                <input type="file" id="imagen-noticia" accept="image/*" class="text-xs text-slate-300 w-full">
+                                <div id="preview-imagen" class="mt-2 hidden">
+                                    <img id="preview-img" class="w-full max-h-40 object-contain rounded-lg">
+                                </div>
+                            </div>
+                            
                             <button onclick="agregarNoticia()" class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-xl font-bold text-sm w-full">
                                 ➕ Publicar Noticia
                             </button>
                         </div>
-                        <p class="text-xs text-slate-400 mt-2">💡 Tip: Puedes agregar una imagen desde imgur.com o imgbb.com</p>
+                        <p class="text-xs text-slate-400 mt-2">💡 Tip: Puedes subir fotos desde tu galería o cámara</p>
                     </div>
 
                     <!-- Lista de Noticias -->
@@ -739,7 +748,7 @@
             const tipo = document.getElementById('tipo-noticia').value;
             const titulo = document.getElementById('titulo-noticia').value.trim();
             const contenido = document.getElementById('contenido-noticia').value.trim();
-            const imagen = document.getElementById('imagen-noticia').value.trim();
+            const imagenFile = document.getElementById('imagen-noticia').files[0];
             
             if (!titulo) {
                 alert('❌ Por favor ingresa un título');
@@ -751,6 +760,25 @@
                 return;
             }
             
+            // Si hay imagen, convertirla a Base64
+            if (imagenFile) {
+                // Validar tamaño (máximo 2MB)
+                if (imagenFile.size > 2 * 1024 * 1024) {
+                    alert('❌ La imagen es muy grande. Máximo 2MB.');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    guardarNoticia(tipo, titulo, contenido, e.target.result);
+                };
+                reader.readAsDataURL(imagenFile);
+            } else {
+                guardarNoticia(tipo, titulo, contenido, null);
+            }
+        }
+
+        function guardarNoticia(tipo, titulo, contenido, imagenBase64) {
             const noticias = JSON.parse(localStorage.getItem('noticias') || '[]');
             
             const noticia = {
@@ -758,17 +786,26 @@
                 tipo: tipo,
                 titulo: titulo,
                 contenido: contenido,
-                imagen: imagen || null,
+                imagen: imagenBase64,
                 fecha: new Date().toISOString()
             };
             
-            noticias.unshift(noticia); // Agregar al principio
+            noticias.unshift(noticia);
             localStorage.setItem('noticias', JSON.stringify(noticias));
             
             // Limpiar campos
             document.getElementById('titulo-noticia').value = '';
             document.getElementById('contenido-noticia').value = '';
             document.getElementById('imagen-noticia').value = '';
+            const previewDiv = document.getElementById('preview-imagen');
+            if (previewDiv) previewDiv.classList.add('hidden');
+            
+            // Actualizar listas
+            cargarNoticiasAdmin();
+            mostrarNoticias();
+            
+            alert('✅ Noticia publicada correctamente');
+        }
             
             // Actualizar listas
             cargarNoticiasAdmin();
@@ -1033,17 +1070,16 @@
             
             // Imagen si existe
             let imagenHTML = '';
-            if (noticia.imagen) {
-                console.log('Mostrando imagen:', noticia.imagen);
+            if (noticia.imagen && noticia.imagen.trim() !== '') {
+                console.log('=== RENDERIZANDO IMAGEN ===');
+                console.log('URL:', noticia.imagen);
+                console.log('Título noticia:', noticia.titulo);
+                
                 imagenHTML = `
-                    <div class="mb-4" style="width: 100%; background: rgba(255,255,255,0.05); border-radius: 0.5rem; padding: 0.5rem;">
-                        <img src="${noticia.imagen}" 
-                             alt="${noticia.titulo}" 
-                             style="width: 100%; height: auto; display: block; border-radius: 0.5rem; max-height: 300px; object-fit: cover;"
-                             onload="console.log('Imagen cargada OK')"
-                             onerror="console.error('Error cargando imagen'); this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22200%22%3E%3Crect fill=%22%23334155%22 width=%22400%22 height=%22200%22/%3E%3Ctext fill=%22%23cbd5e1%22 font-size=%2220%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3EImagen no disponible%3C/text%3E%3C/svg%3E'">
-                    </div>
+                    <img src="${noticia.imagen}" style="width:100%;max-width:100%;height:auto;display:block;margin:10px 0;">
                 `;
+            } else {
+                console.log('Sin imagen para esta noticia');
             }
             
             // Aplicar fade out
@@ -1101,23 +1137,27 @@
             const noticiasLocales = JSON.parse(localStorage.getItem('noticias') || '[]');
             
             let info = `🐛 DEBUG DE NOTICIAS\n\n`;
-            info += `📊 NOTICIAS LOCALES (localStorage): ${noticiasLocales.length}\n\n`;
+            info += `📊 NOTICIAS LOCALES (guardadas): ${noticiasLocales.length}\n\n`;
             
             noticiasLocales.forEach((n, i) => {
-                info += `--- Noticia ${i + 1} ---\n`;
+                info += `--- Local ${i + 1} ---\n`;
                 info += `Tipo: ${n.tipo}\n`;
-                info += `Título: ${n.titulo}\n`;
-                info += `Imagen: ${n.imagen || 'SIN IMAGEN'}\n`;
-                info += `Contenido: ${n.contenido.substring(0, 50)}...\n\n`;
+                info += `Título: ${n.titulo.substring(0, 40)}\n`;
+                info += `Tiene imagen: ${n.imagen ? 'SÍ - ' + n.imagen.substring(0, 30) + '...' : 'NO'}\n\n`;
             });
             
-            info += `\n📰 TOTAL EN CARRUSEL: ${todasLasNoticias.length}\n\n`;
+            info += `\n📰 CARRUSEL ACTUAL: ${todasLasNoticias.length} noticias\n\n`;
             
             todasLasNoticias.forEach((n, i) => {
-                info += `${i + 1}. ${n.titulo.substring(0, 40)}... (${n.origen})\n`;
+                const imgStatus = n.imagen ? '🖼️' : '📄';
+                info += `${i + 1}. ${imgStatus} ${n.titulo.substring(0, 35)}... [${n.origen}]\n`;
             });
             
             alert(info);
+            
+            // También mostrar en consola para más detalles
+            console.log('=== NOTICIAS LOCALES ===', noticiasLocales);
+            console.log('=== TODAS LAS NOTICIAS ===', todasLasNoticias);
         }
 
         // Funciones del carrusel de fotos
@@ -1515,6 +1555,28 @@
         cambiarVista('proxima');
         cargarJugadoresCustom(); // Cargar jugadores personalizados al inicio
         mostrarNoticias(); // Cargar noticias al inicio
+        
+        // Preview de imagen al seleccionar archivo
+        setTimeout(() => {
+            const inputImagen = document.getElementById('imagen-noticia');
+            if (inputImagen) {
+                inputImagen.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            const previewImg = document.getElementById('preview-img');
+                            const previewDiv = document.getElementById('preview-imagen');
+                            if (previewImg && previewDiv) {
+                                previewImg.src = event.target.result;
+                                previewDiv.classList.remove('hidden');
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        }, 1000);
     </script>
 </body>
 </html>
