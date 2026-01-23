@@ -853,55 +853,43 @@
 
         async function obtenerNoticiasFutbol() {
             try {
-                // Intentar obtener noticias de múltiples RSS feeds de sitios argentinos
                 const noticias = [];
-                
-                // Usar un proxy CORS para acceder a los RSS feeds
                 const corsProxy = 'https://api.allorigins.win/raw?url=';
+                const timeout = 3000; // 3 segundos máximo por fuente
                 
-                // RSS de Olé (Fútbol argentino)
+                // Función para fetch con timeout
+                const fetchWithTimeout = async (url, timeoutMs) => {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+                    try {
+                        const response = await fetch(url, { signal: controller.signal });
+                        clearTimeout(timeoutId);
+                        return response;
+                    } catch (error) {
+                        clearTimeout(timeoutId);
+                        throw error;
+                    }
+                };
+                
+                // Intentar cargar de Olé (con timeout)
                 try {
-                    const rssOle = await fetch(corsProxy + encodeURIComponent('https://www.ole.com.ar/rss/ultimas-noticias/'));
+                    const rssOle = await fetchWithTimeout(corsProxy + encodeURIComponent('https://www.ole.com.ar/rss/ultimas-noticias/'), timeout);
                     const textOle = await rssOle.text();
                     const noticiasOle = parsearRSS(textOle, 'Olé');
-                    noticias.push(...noticiasOle.slice(0, 2)); // Tomar las 2 primeras
+                    noticias.push(...noticiasOle.slice(0, 2));
                 } catch (error) {
-                    console.log('No se pudieron cargar noticias de Olé:', error);
+                    console.log('Olé timeout o error');
                 }
                 
-                // RSS de TyC Sports
-                try {
-                    const rssTyc = await fetch(corsProxy + encodeURIComponent('https://www.tycsports.com/feed.xml'));
-                    const textTyc = await rssTyc.text();
-                    const noticiasTyc = parsearRSS(textTyc, 'TyC Sports');
-                    noticias.push(...noticiasTyc.slice(0, 2)); // Tomar las 2 primeras
-                } catch (error) {
-                    console.log('No se pudieron cargar noticias de TyC Sports:', error);
+                // Si ya tenemos noticias, retornar inmediatamente
+                if (noticias.length > 0) {
+                    return noticias;
                 }
                 
-                // RSS de ESPN (deportes en general)
-                try {
-                    const rssEspn = await fetch(corsProxy + encodeURIComponent('https://www.espn.com.ar/espndeportes/rss'));
-                    const textEspn = await rssEspn.text();
-                    const noticiasEspn = parsearRSS(textEspn, 'ESPN');
-                    noticias.push(...noticiasEspn.slice(0, 2)); // Tomar las 2 primeras
-                } catch (error) {
-                    console.log('No se pudieron cargar noticias de ESPN:', error);
-                }
-                
-                // Si no se pudieron obtener noticias del RSS, usar noticias de ejemplo
-                if (noticias.length === 0) {
-                    console.log('Usando noticias de ejemplo porque no se pudo acceder a ningún RSS');
-                    return obtenerNoticiasEjemplo();
-                }
-                
-                // Mezclar noticias aleatoriamente para variedad
-                noticias.sort(() => Math.random() - 0.5);
-                
-                return noticias.slice(0, 6); // Devolver máximo 6 noticias en total
+                // Si no, usar ejemplos
+                return obtenerNoticiasEjemplo();
             } catch (error) {
                 console.error('Error al obtener noticias:', error);
-                // Si falla todo, retornar noticias de ejemplo
                 return obtenerNoticiasEjemplo();
             }
         }
@@ -1039,12 +1027,14 @@
             // Imagen si existe
             let imagenHTML = '';
             if (noticia.imagen) {
+                console.log('Mostrando imagen:', noticia.imagen);
                 imagenHTML = `
-                    <div class="mb-4">
+                    <div class="mb-4" style="width: 100%; background: rgba(255,255,255,0.05); border-radius: 0.5rem; padding: 0.5rem;">
                         <img src="${noticia.imagen}" 
                              alt="${noticia.titulo}" 
-                             class="w-full rounded-lg"
-                             style="display: block; max-width: 100%;">
+                             style="width: 100%; height: auto; display: block; border-radius: 0.5rem; max-height: 300px; object-fit: cover;"
+                             onload="console.log('Imagen cargada OK')"
+                             onerror="console.error('Error cargando imagen'); this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22200%22%3E%3Crect fill=%22%23334155%22 width=%22400%22 height=%22200%22/%3E%3Ctext fill=%22%23cbd5e1%22 font-size=%2220%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3EImagen no disponible%3C/text%3E%3C/svg%3E'">
                     </div>
                 `;
             }
