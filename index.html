@@ -128,7 +128,10 @@
         </header>
 
         <!-- Botón Admin (esquina superior derecha) -->
-        <div class="fixed top-4 right-4 z-50">
+        <div class="fixed top-4 right-4 z-50 flex gap-2">
+            <button onclick="mostrarDebugNoticias()" class="bg-purple-600 hover:bg-purple-700 px-3 sm:px-4 py-2 sm:py-3 rounded-xl font-bold text-xs sm:text-sm text-white">
+                🐛 DEBUG
+            </button>
             <button onclick="toggleAdmin()" class="btn-admin px-3 sm:px-4 py-2 sm:py-3 rounded-xl font-bold text-xs sm:text-sm text-white">
                 🔐 ADMIN
             </button>
@@ -824,15 +827,19 @@
         async function cargarTodasLasNoticias() {
             // Obtener noticias del torneo
             const noticiasLocales = JSON.parse(localStorage.getItem('noticias') || '[]');
+            console.log('Noticias locales cargadas:', noticiasLocales.length, noticiasLocales);
             
             // Obtener noticias de fútbol general
             const noticiasFutbol = await obtenerNoticiasFutbol();
+            console.log('Noticias de fútbol cargadas:', noticiasFutbol.length, noticiasFutbol);
             
             // Combinar todas las noticias
             todasLasNoticias = [
                 ...noticiasLocales.map(n => ({ ...n, origen: 'torneo' })),
                 ...noticiasFutbol.map(n => ({ ...n, origen: 'futbol' }))
             ];
+            
+            console.log('Total noticias combinadas:', todasLasNoticias.length, todasLasNoticias);
             
             if (todasLasNoticias.length === 0) {
                 document.getElementById('noticias-carrusel').innerHTML = `
@@ -1088,6 +1095,29 @@
             if (todasLasNoticias.length === 0) return;
             noticiaActualIndex = (noticiaActualIndex - 1 + todasLasNoticias.length) % todasLasNoticias.length;
             mostrarNoticiaActual();
+        }
+
+        function mostrarDebugNoticias() {
+            const noticiasLocales = JSON.parse(localStorage.getItem('noticias') || '[]');
+            
+            let info = `🐛 DEBUG DE NOTICIAS\n\n`;
+            info += `📊 NOTICIAS LOCALES (localStorage): ${noticiasLocales.length}\n\n`;
+            
+            noticiasLocales.forEach((n, i) => {
+                info += `--- Noticia ${i + 1} ---\n`;
+                info += `Tipo: ${n.tipo}\n`;
+                info += `Título: ${n.titulo}\n`;
+                info += `Imagen: ${n.imagen || 'SIN IMAGEN'}\n`;
+                info += `Contenido: ${n.contenido.substring(0, 50)}...\n\n`;
+            });
+            
+            info += `\n📰 TOTAL EN CARRUSEL: ${todasLasNoticias.length}\n\n`;
+            
+            todasLasNoticias.forEach((n, i) => {
+                info += `${i + 1}. ${n.titulo.substring(0, 40)}... (${n.origen})\n`;
+            });
+            
+            alert(info);
         }
 
         // Funciones del carrusel de fotos
