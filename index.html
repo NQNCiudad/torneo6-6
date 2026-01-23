@@ -224,6 +224,34 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Gestión de Fotos -->
+                <div class="mt-6 glass rounded-xl p-4 border border-purple-500">
+                    <h3 class="font-bold text-purple-400 mb-3 flex items-center gap-2">
+                        <span class="text-xl">📸</span> Gestión de Fotos
+                    </h3>
+                    
+                    <!-- Agregar Foto -->
+                    <div class="mb-4 bg-white/5 p-3 rounded-lg">
+                        <h4 class="text-sm font-bold text-purple-300 mb-2">Agregar Nueva Foto</h4>
+                        <div class="space-y-2">
+                            <input type="text" id="url-foto" class="input-goles w-full" placeholder="URL de la imagen (ej: https://i.imgur.com/...)">
+                            <input type="text" id="descripcion-foto" class="input-goles w-full" placeholder="Descripción de la foto">
+                            <button onclick="agregarFoto()" class="bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded-xl font-bold text-sm w-full">
+                                ➕ Agregar Foto
+                            </button>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-2">💡 Tip: Sube tus fotos a imgur.com o imgbb.com y copia el link aquí</p>
+                    </div>
+
+                    <!-- Lista de Fotos -->
+                    <div class="bg-white/5 p-3 rounded-lg">
+                        <h4 class="text-sm font-bold text-purple-300 mb-2">Fotos Publicadas</h4>
+                        <div id="admin-fotos-lista" class="space-y-2 max-h-60 overflow-y-auto">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -233,13 +261,42 @@
             <button onclick="cambiarTorneo('Clausura')" id="btn-torneo-Clausura" class="px-6 sm:px-8 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all">Clausura</button>
         </div>
 
-        <!-- Selector de Vista Principal -->
-        <div class="flex flex-wrap justify-center gap-1 sm:gap-2 mb-4 sm:mb-10 bg-white/5 p-1 rounded-2xl w-fit mx-auto border border-white/10 max-w-[95vw]">
-            <button onclick="cambiarVista('proxima')" id="btn-vista-proxima" class="px-2 sm:px-5 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-base transition-all whitespace-nowrap">Próxima Fecha</button>
-            <button onclick="cambiarVista('tabla')" id="btn-vista-tabla" class="px-3 sm:px-5 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-base transition-all">Tabla</button>
-            <button onclick="cambiarVista('fixture')" id="btn-vista-fixture" class="px-3 sm:px-5 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-base transition-all">Fixture</button>
-            <button onclick="cambiarVista('goleadores')" id="btn-vista-goleadores" class="px-2 sm:px-5 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-base transition-all">Goleadores</button>
-        </div>
+        <!-- Layout principal: Sidebar + Contenido -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 mb-4 sm:mb-10">
+            <!-- Sidebar Izquierdo: Carrusel de Fotos (solo desktop) -->
+            <div class="hidden lg:block lg:col-span-3">
+                <div class="sticky top-4">
+                    <h3 class="text-lg font-bold text-center mb-3 uppercase tracking-wide" style="font-family: 'Oswald';">
+                        📸 FOTOS DE LA <span class="text-green-500">FECHA</span>
+                    </h3>
+                    
+                    <div id="fotos-carrusel" class="glass rounded-xl overflow-hidden transition-opacity duration-1000">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                    
+                    <div class="flex justify-center gap-2 mt-3">
+                        <button onclick="fotoAnterior()" class="glass px-3 py-2 rounded-lg hover:bg-white/10 transition-all text-xs">
+                            ←
+                        </button>
+                        <div id="foto-indicador" class="glass px-3 py-2 rounded-lg text-xs font-bold">
+                            1 / 1
+                        </div>
+                        <button onclick="fotoSiguiente()" class="glass px-3 py-2 rounded-lg hover:bg-white/10 transition-all text-xs">
+                            →
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contenido Principal -->
+            <div class="lg:col-span-9">
+                <!-- Selector de Vista Principal -->
+                <div class="flex flex-wrap justify-center gap-1 sm:gap-2 mb-4 sm:mb-6 bg-white/5 p-1 rounded-2xl w-fit mx-auto border border-white/10 max-w-[95vw]">
+                    <button onclick="cambiarVista('proxima')" id="btn-vista-proxima" class="px-2 sm:px-5 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-base transition-all whitespace-nowrap">Próxima Fecha</button>
+                    <button onclick="cambiarVista('tabla')" id="btn-vista-tabla" class="px-3 sm:px-5 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-base transition-all">Tabla</button>
+                    <button onclick="cambiarVista('fixture')" id="btn-vista-fixture" class="px-3 sm:px-5 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-base transition-all">Fixture</button>
+                    <button onclick="cambiarVista('goleadores')" id="btn-vista-goleadores" class="px-2 sm:px-5 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-base transition-all">Goleadores</button>
+                </div>
 
         <!-- Contenedor de Fixture/Próxima Fecha -->
         <div id="partidos-container" class="space-y-3 sm:space-y-5 text-center">
@@ -361,6 +418,8 @@
                 </div>
             </div>
         </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -377,6 +436,9 @@
         let todasLasNoticias = [];
         let noticiaActualIndex = 0;
         let carruselInterval = null;
+        let todasLasFotos = [];
+        let fotoActualIndex = 0;
+        let carruselFotosInterval = null;
 
         // Base de datos de jugadores
         const jugadoresDB = {
@@ -424,6 +486,7 @@
             if (!panel.classList.contains('hidden') && adminAutenticado) {
                 cargarPanelAdmin();
                 cargarNoticiasAdmin();
+                cargarFotosAdmin();
             }
         }
 
@@ -434,6 +497,7 @@
                 document.getElementById('admin-content').classList.remove('hidden');
                 cargarPanelAdmin();
                 cargarNoticiasAdmin();
+                cargarFotosAdmin();
             } else {
                 alert('❌ Contraseña incorrecta');
             }
@@ -844,39 +908,127 @@
         }
 
         async function obtenerNoticiasFutbol() {
-            // Noticias de ejemplo (hardcoded) - En producción podrías usar una API real
-            const noticiasFutbol = [
+            try {
+                // Intentar obtener noticias de RSS feeds de sitios argentinos
+                const noticias = [];
+                
+                // Usar un proxy CORS para acceder a los RSS feeds
+                const corsProxy = 'https://api.allorigins.win/raw?url=';
+                
+                // RSS de Olé (Fútbol argentino)
+                try {
+                    const rssOle = await fetch(corsProxy + encodeURIComponent('https://www.ole.com.ar/rss/ultimas-noticias/'));
+                    const textOle = await rssOle.text();
+                    const noticiasOle = parsearRSS(textOle, 'Olé');
+                    noticias.push(...noticiasOle.slice(0, 3)); // Tomar las 3 primeras
+                } catch (error) {
+                    console.log('No se pudieron cargar noticias de Olé:', error);
+                }
+                
+                // Si no se pudieron obtener noticias del RSS, usar noticias de ejemplo
+                if (noticias.length === 0) {
+                    console.log('Usando noticias de ejemplo porque no se pudo acceder al RSS');
+                    return obtenerNoticiasEjemplo();
+                }
+                
+                return noticias;
+            } catch (error) {
+                console.error('Error al obtener noticias:', error);
+                // Si falla todo, retornar noticias de ejemplo
+                return obtenerNoticiasEjemplo();
+            }
+        }
+
+        function parsearRSS(xmlText, fuente) {
+            try {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                
+                const items = xmlDoc.querySelectorAll('item');
+                const noticias = [];
+                
+                items.forEach((item, index) => {
+                    if (index < 5) { // Solo tomar las primeras 5 noticias
+                        const titulo = item.querySelector('title')?.textContent || 'Sin título';
+                        let descripcion = item.querySelector('description')?.textContent || '';
+                        
+                        // Limpiar HTML de la descripción si existe
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = descripcion;
+                        descripcion = tempDiv.textContent || tempDiv.innerText || descripcion;
+                        
+                        // Limitar longitud de descripción
+                        if (descripcion.length > 200) {
+                            descripcion = descripcion.substring(0, 200) + '...';
+                        }
+                        
+                        const pubDate = item.querySelector('pubDate')?.textContent || new Date().toISOString();
+                        
+                        // Determinar tipo de noticia basado en palabras clave
+                        let tipo = 'general';
+                        const tituloLower = titulo.toLowerCase();
+                        if (tituloLower.includes('gol') || tituloLower.includes('hat-trick') || tituloLower.includes('triplete')) {
+                            tipo = 'gol';
+                        } else if (tituloLower.includes('fichaj') || tituloLower.includes('transfer') || tituloLower.includes('refuerzo') || tituloLower.includes('pase')) {
+                            tipo = 'transferencia';
+                        } else if (tituloLower.includes('lesion') || tituloLower.includes('lesionado') || tituloLower.includes('baja')) {
+                            tipo = 'lesion';
+                        }
+                        
+                        noticias.push({
+                            id: 'rss_' + Date.now() + '_' + index,
+                            tipo: tipo,
+                            titulo: titulo,
+                            contenido: descripcion || 'Lee más en ' + fuente,
+                            fecha: pubDate,
+                            fuente: fuente
+                        });
+                    }
+                });
+                
+                return noticias;
+            } catch (error) {
+                console.error('Error al parsear RSS:', error);
+                return [];
+            }
+        }
+
+        function obtenerNoticiasEjemplo() {
+            // Noticias de ejemplo (fallback si no funciona el RSS)
+            return [
                 {
                     id: 'f1',
                     tipo: 'general',
-                    titulo: 'Messi anota triplete en victoria del Inter Miami',
-                    contenido: 'Lionel Messi brilló con tres goles en la victoria 4-1 del Inter Miami ante Nashville SC en la MLS.',
-                    fecha: new Date().toISOString()
+                    titulo: 'River goleó a Boca en el Superclásico',
+                    contenido: 'El Millonario se impuso 3-0 en el Monumental con goles de Borja, Solari y una joya de tiro libre de Quintero.',
+                    fecha: new Date().toISOString(),
+                    fuente: 'Fútbol Argentino'
                 },
                 {
                     id: 'f2',
                     tipo: 'transferencia',
-                    titulo: 'Oficial: Mbappé firma con Real Madrid',
-                    contenido: 'El delantero francés firmó contrato con el Real Madrid hasta 2029, cumpliendo su sueño de jugar en el Santiago Bernabéu.',
-                    fecha: new Date().toISOString()
+                    titulo: 'Oficial: Julián Álvarez regresa a River Plate',
+                    contenido: 'El delantante campeón del mundo firmó su vuelta al club de Núñez tras su exitoso paso por el Manchester City.',
+                    fecha: new Date().toISOString(),
+                    fuente: 'Fútbol Argentino'
                 },
                 {
                     id: 'f3',
                     tipo: 'general',
-                    titulo: 'Argentina mantiene el liderato en el ranking FIFA',
-                    contenido: 'La Selección Argentina continúa como líder del ranking mundial de la FIFA, seguida por Francia y Brasil.',
-                    fecha: new Date().toISOString()
+                    titulo: 'La Selección Argentina convocó 30 jugadores',
+                    contenido: 'Scaloni dio la lista preliminar para los próximos amistosos de la Albiceleste ante Uruguay y Brasil.',
+                    fecha: new Date().toISOString(),
+                    fuente: 'Selección'
                 },
                 {
                     id: 'f4',
                     tipo: 'gol',
-                    titulo: 'Haaland rompe récord de goles en Premier League',
-                    contenido: 'El noruego superó el récord histórico de goles en una temporada de la Premier League con 37 tantos.',
-                    fecha: new Date().toISOString()
+                    titulo: 'Messi anotó un golazo de tiro libre en Miami',
+                    contenido: 'El capitán argentino marcó un gol de tiro libre desde 30 metros en la victoria del Inter Miami por 2-1.',
+                    fecha: new Date().toISOString(),
+                    fuente: 'Fútbol Internacional'
                 }
             ];
-            
-            return noticiasFutbol;
         }
 
         function mostrarNoticiaActual() {
@@ -960,6 +1112,153 @@
             if (todasLasNoticias.length === 0) return;
             noticiaActualIndex = (noticiaActualIndex - 1 + todasLasNoticias.length) % todasLasNoticias.length;
             mostrarNoticiaActual();
+        }
+
+        // Funciones del carrusel de fotos
+        function agregarFoto() {
+            const url = document.getElementById('url-foto').value.trim();
+            const descripcion = document.getElementById('descripcion-foto').value.trim();
+            
+            if (!url) {
+                alert('❌ Por favor ingresa la URL de la imagen');
+                return;
+            }
+            
+            if (!descripcion) {
+                alert('❌ Por favor ingresa una descripción');
+                return;
+            }
+            
+            const fotos = JSON.parse(localStorage.getItem('fotos') || '[]');
+            
+            const foto = {
+                id: Date.now(),
+                url: url,
+                descripcion: descripcion,
+                fecha: new Date().toISOString()
+            };
+            
+            fotos.unshift(foto); // Agregar al principio
+            localStorage.setItem('fotos', JSON.stringify(fotos));
+            
+            // Limpiar campos
+            document.getElementById('url-foto').value = '';
+            document.getElementById('descripcion-foto').value = '';
+            
+            // Actualizar listas
+            cargarFotosAdmin();
+            mostrarFotos();
+            
+            alert('✅ Foto agregada correctamente');
+        }
+
+        function eliminarFoto(id) {
+            if (!confirm('¿Estás seguro de eliminar esta foto?')) {
+                return;
+            }
+            
+            let fotos = JSON.parse(localStorage.getItem('fotos') || '[]');
+            fotos = fotos.filter(f => f.id !== id);
+            localStorage.setItem('fotos', JSON.stringify(fotos));
+            
+            cargarFotosAdmin();
+            mostrarFotos();
+            
+            alert('✅ Foto eliminada');
+        }
+
+        function cargarFotosAdmin() {
+            const container = document.getElementById('admin-fotos-lista');
+            const fotos = JSON.parse(localStorage.getItem('fotos') || '[]');
+            
+            if (fotos.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">No hay fotos publicadas</p>';
+                return;
+            }
+            
+            container.innerHTML = fotos.map(foto => {
+                return `
+                    <div class="bg-white/10 p-2 rounded text-xs flex items-center gap-2">
+                        <img src="${foto.url}" class="w-12 h-12 object-cover rounded" onerror="this.src='https://via.placeholder.com/100?text=Error'">
+                        <div class="flex-1">
+                            <span class="font-bold block">${foto.descripcion}</span>
+                        </div>
+                        <button onclick="eliminarFoto(${foto.id})" class="text-red-400 hover:text-red-300">🗑️</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function mostrarFotos() {
+            todasLasFotos = JSON.parse(localStorage.getItem('fotos') || '[]');
+            
+            if (todasLasFotos.length === 0) {
+                document.getElementById('fotos-carrusel').innerHTML = `
+                    <div class="p-4 text-center">
+                        <div class="text-4xl mb-2">📸</div>
+                        <p class="text-xs text-slate-400">Sin fotos</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            fotoActualIndex = 0;
+            mostrarFotoActual();
+            iniciarCarruselFotos();
+        }
+
+        function mostrarFotoActual() {
+            if (todasLasFotos.length === 0) return;
+            
+            const foto = todasLasFotos[fotoActualIndex];
+            const container = document.getElementById('fotos-carrusel');
+            
+            // Aplicar fade out
+            container.style.opacity = '0';
+            
+            setTimeout(() => {
+                container.innerHTML = `
+                    <div class="relative">
+                        <img src="${foto.url}" 
+                             alt="${foto.descripcion}" 
+                             class="w-full h-64 object-cover"
+                             onerror="this.src='https://via.placeholder.com/400x300?text=Error+al+cargar'">
+                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                            <p class="text-xs sm:text-sm font-bold text-white">${foto.descripcion}</p>
+                        </div>
+                    </div>
+                `;
+                
+                // Aplicar fade in
+                container.style.opacity = '1';
+                
+                // Actualizar indicador
+                document.getElementById('foto-indicador').textContent = `${fotoActualIndex + 1} / ${todasLasFotos.length}`;
+            }, 300);
+        }
+
+        function iniciarCarruselFotos() {
+            // Limpiar intervalo anterior si existe
+            if (carruselFotosInterval) {
+                clearInterval(carruselFotosInterval);
+            }
+            
+            // Cambiar foto cada 5 segundos
+            carruselFotosInterval = setInterval(() => {
+                fotoSiguiente();
+            }, 5000);
+        }
+
+        function fotoSiguiente() {
+            if (todasLasFotos.length === 0) return;
+            fotoActualIndex = (fotoActualIndex + 1) % todasLasFotos.length;
+            mostrarFotoActual();
+        }
+
+        function fotoAnterior() {
+            if (todasLasFotos.length === 0) return;
+            fotoActualIndex = (fotoActualIndex - 1 + todasLasFotos.length) % todasLasFotos.length;
+            mostrarFotoActual();
         }
 
         async function cargarDatos() {
@@ -1356,6 +1655,7 @@
         cambiarVista('proxima');
         cargarJugadoresCustom(); // Cargar jugadores personalizados al inicio
         mostrarNoticias(); // Cargar noticias al inicio
+        mostrarFotos(); // Cargar fotos al inicio
     </script>
 </body>
 </html>
