@@ -861,6 +861,131 @@
             }
         }
 
+        let noticiaEditando = null;
+
+        function editarNoticia(noticia) {
+            noticiaEditando = noticia;
+            
+            // Llenar el formulario con los datos de la noticia
+            document.getElementById('tipo-noticia').value = noticia.tipo;
+            document.getElementById('titulo-noticia').value = noticia.titulo;
+            document.getElementById('contenido-noticia').value = noticia.contenido;
+            
+            // Si tiene imagen, mostrar preview
+            if (noticia.imagen && noticia.imagen.trim() !== '') {
+                const previewImg = document.getElementById('preview-img');
+                const previewDiv = document.getElementById('preview-imagen');
+                if (previewImg && previewDiv) {
+                    previewImg.src = noticia.imagen;
+                    previewDiv.classList.remove('hidden');
+                }
+            }
+            
+            // Cambiar el botón de "Publicar" a "Actualizar"
+            const btnPublicar = document.querySelector('button[onclick="agregarNoticia()"]');
+            if (btnPublicar) {
+                btnPublicar.textContent = '✏️ Actualizar Noticia';
+                btnPublicar.onclick = function() { guardarEdicion(); };
+                btnPublicar.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                btnPublicar.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+            }
+            
+            // Scroll al formulario
+            document.getElementById('tipo-noticia').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            alert('✏️ Editando noticia. Modificá los campos y hacé clic en "Actualizar".');
+        }
+
+        async function guardarEdicion() {
+            if (!noticiaEditando) {
+                alert('❌ No hay noticia seleccionada para editar');
+                return;
+            }
+            
+            const tipo = document.getElementById('tipo-noticia').value;
+            const titulo = document.getElementById('titulo-noticia').value.trim();
+            const contenido = document.getElementById('contenido-noticia').value.trim();
+            const imagenFile = document.getElementById('imagen-noticia').files[0];
+            
+            if (!titulo) {
+                alert('❌ Por favor ingresa un título');
+                return;
+            }
+            
+            if (!contenido) {
+                alert('❌ Por favor ingresa el contenido');
+                return;
+            }
+            
+            // Si hay nueva imagen, convertirla
+            if (imagenFile) {
+                if (imagenFile.size > 2 * 1024 * 1024) {
+                    alert('❌ La imagen es muy grande. Máximo 2MB.');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    await enviarEdicion(tipo, titulo, contenido, e.target.result);
+                };
+                reader.readAsDataURL(imagenFile);
+            } else {
+                // Mantener la imagen anterior
+                await enviarEdicion(tipo, titulo, contenido, noticiaEditando.imagen);
+            }
+        }
+
+        async function enviarEdicion(tipo, titulo, contenido, imagenBase64) {
+            try {
+                const formData = new URLSearchParams();
+                formData.append('accion', 'editarNoticia');
+                formData.append('id', noticiaEditando.id);
+                formData.append('tipo', tipo);
+                formData.append('titulo', titulo);
+                formData.append('contenido', contenido);
+                formData.append('imagen', imagenBase64 || '');
+                formData.append('fecha', noticiaEditando.fecha);
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Limpiar formulario
+                    document.getElementById('titulo-noticia').value = '';
+                    document.getElementById('contenido-noticia').value = '';
+                    document.getElementById('imagen-noticia').value = '';
+                    const previewDiv = document.getElementById('preview-imagen');
+                    if (previewDiv) previewDiv.classList.add('hidden');
+                    
+                    // Restaurar botón a "Publicar"
+                    const btnPublicar = document.querySelector('button[onclick="guardarEdicion()"]');
+                    if (btnPublicar) {
+                        btnPublicar.textContent = '➕ Publicar Noticia';
+                        btnPublicar.onclick = function() { agregarNoticia(); };
+                        btnPublicar.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                        btnPublicar.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                    }
+                    
+                    noticiaEditando = null;
+                    
+                    // Actualizar listas
+                    cargarNoticiasAdmin();
+                    mostrarNoticias();
+                    
+                    alert('✅ Noticia actualizada correctamente');
+                } else {
+                    alert('❌ Error al actualizar: ' + (result.error || 'Error desconocido'));
+                }
+            } catch (error) {
+                console.error('Error actualizando noticia:', error);
+                alert('❌ Error de conexión al actualizar la noticia');
+            }
+        }
+
         async function cargarNoticiasAdmin() {
             const container = document.getElementById('admin-noticias-lista');
             
@@ -891,8 +1016,11 @@
                     return `
                         <div class="bg-white/10 p-2 rounded text-xs">
                             <div class="flex justify-between items-start gap-2">
-                                <span class="font-bold">${iconos[noticia.tipo] || '📢'} ${noticia.titulo} ${tieneImagen ? '🖼️' : ''}</span>
-                                <button onclick="eliminarNoticia(${noticia.id})" class="text-red-400 hover:text-red-300">🗑️</button>
+                                <span class="font-bold flex-1">${iconos[noticia.tipo] || '📢'} ${noticia.titulo} ${tieneImagen ? '🖼️' : ''}</span>
+                                <div class="flex gap-1">
+                                    <button onclick='editarNoticia(${JSON.stringify(noticia)})' class="text-blue-400 hover:text-blue-300" title="Editar">✏️</button>
+                                    <button onclick="eliminarNoticia(${noticia.id})" class="text-red-400 hover:text-red-300" title="Eliminar">🗑️</button>
+                                </div>
                             </div>
                         </div>
                     `;
