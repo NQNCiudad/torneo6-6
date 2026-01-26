@@ -1402,15 +1402,41 @@
         // Funciones del carrusel de fotos
         function comentarioSiguiente() {
             if (todosLosComentarios.length === 0) return;
-            comentarioActualIndex = (comentarioActualIndex + 1) % todosLosComentarios.length;
+            
+            // Solo navegar entre comentarios principales (no respuestas)
+            const comentariosPrincipales = todosLosComentarios.filter(c => !c.parent_id || c.parent_id == 0);
+            
+            if (comentariosPrincipales.length === 0) return;
+            
+            const comentarioActual = todosLosComentarios[comentarioActualIndex];
+            const indexActualEnPrincipales = comentariosPrincipales.findIndex(c => c.id == comentarioActual.id);
+            
+            const siguienteIndexPrincipal = (indexActualEnPrincipales + 1) % comentariosPrincipales.length;
+            const siguienteComentario = comentariosPrincipales[siguienteIndexPrincipal];
+            
+            comentarioActualIndex = todosLosComentarios.findIndex(c => c.id == siguienteComentario.id);
             mostrarComentarioActual();
         }
 
         function comentarioAnterior() {
             if (todosLosComentarios.length === 0) return;
-            comentarioActualIndex = (comentarioActualIndex - 1 + todosLosComentarios.length) % todosLosComentarios.length;
+            
+            // Solo navegar entre comentarios principales (no respuestas)
+            const comentariosPrincipales = todosLosComentarios.filter(c => !c.parent_id || c.parent_id == 0);
+            
+            if (comentariosPrincipales.length === 0) return;
+            
+            const comentarioActual = todosLosComentarios[comentarioActualIndex];
+            const indexActualEnPrincipales = comentariosPrincipales.findIndex(c => c.id == comentarioActual.id);
+            
+            const anteriorIndexPrincipal = (indexActualEnPrincipales - 1 + comentariosPrincipales.length) % comentariosPrincipales.length;
+            const anteriorComentario = comentariosPrincipales[anteriorIndexPrincipal];
+            
+            comentarioActualIndex = todosLosComentarios.findIndex(c => c.id == anteriorComentario.id);
             mostrarComentarioActual();
         }
+
+        let comentarioRespondiendo = null;
 
         async function enviarComentario() {
             const nombre = document.getElementById('nombre-comentario').value.trim();
@@ -1433,6 +1459,7 @@
                 formData.append('autor', nombre);
                 formData.append('comentario', texto);
                 formData.append('fecha', new Date().toISOString());
+                formData.append('parent_id', comentarioRespondiendo || 0);
                 
                 const response = await fetch(API_URL, {
                     method: 'POST',
@@ -1445,6 +1472,11 @@
                     document.getElementById('nombre-comentario').value = '';
                     document.getElementById('texto-comentario').value = '';
                     
+                    // Cancelar respuesta
+                    comentarioRespondiendo = null;
+                    const respuestaLabel = document.getElementById('respondiendo-a');
+                    if (respuestaLabel) respuestaLabel.remove();
+                    
                     mostrarComentarios();
                     
                     alert('✅ ¡Comentario publicado!');
@@ -1455,6 +1487,36 @@
                 console.error('Error enviando comentario:', error);
                 alert('❌ Error de conexión al enviar el comentario');
             }
+        }
+
+        function responderComentario(id, autor) {
+            comentarioRespondiendo = id;
+            
+            // Mostrar indicador de respuesta
+            const formulario = document.querySelector('#nombre-comentario').parentElement;
+            let label = document.getElementById('respondiendo-a');
+            
+            if (!label) {
+                label = document.createElement('div');
+                label.id = 'respondiendo-a';
+                label.className = 'bg-blue-500/20 border border-blue-500 rounded-lg p-2 mb-2 text-xs flex justify-between items-center';
+                formulario.insertBefore(label, formulario.firstChild);
+            }
+            
+            label.innerHTML = `
+                <span>↩️ Respondiendo a <strong>${autor}</strong></span>
+                <button onclick="cancelarRespuesta()" class="text-red-400 hover:text-red-300">✕</button>
+            `;
+            
+            // Scroll al formulario
+            document.getElementById('nombre-comentario').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            document.getElementById('texto-comentario').focus();
+        }
+
+        function cancelarRespuesta() {
+            comentarioRespondiendo = null;
+            const label = document.getElementById('respondiendo-a');
+            if (label) label.remove();
         }
 
         async function mostrarComentarios() {
@@ -1502,10 +1564,41 @@
         function mostrarComentarioActual() {
             if (todosLosComentarios.length === 0) return;
             
-            const comentario = todosLosComentarios[comentarioActualIndex];
+            const comentarioPrincipal = todosLosComentarios[comentarioActualIndex];
             const container = document.getElementById('comentarios-carrusel');
             
-            // Manejar fecha con validación
+            // Encontrar respuestas a este comentario
+            const respuestas = todosLosComentarios.filter(c => c.parent_id == comentarioPrincipal.id);
+            
+            // Aplicar fade out
+            container.style.opacity = '0';
+            
+            setTimeout(() => {
+                let html = renderComentario(comentarioPrincipal, false);
+                
+                // Agregar respuestas
+                if (respuestas.length > 0) {
+                    html += '<div class="ml-4 sm:ml-8 mt-3 space-y-3 border-l-2 border-green-500/30 pl-4">';
+                    respuestas.forEach(respuesta => {
+                        html += renderComentario(respuesta, true);
+                    });
+                    html += '</div>';
+                }
+                
+                container.innerHTML = html;
+                
+                // Aplicar fade in
+                container.style.opacity = '1';
+                
+                // Actualizar indicador
+                const comentariosPrincipales = todosLosComentarios.filter(c => !c.parent_id || c.parent_id == 0);
+                const indexReal = comentariosPrincipales.findIndex(c => c.id == comentarioPrincipal.id);
+                document.getElementById('comentario-indicador').textContent = `${indexReal + 1} / ${comentariosPrincipales.length}`;
+            }, 300);
+        }
+
+        function renderComentario(comentario, esRespuesta) {
+            // Manejar fecha
             let fechaFormateada = 'Fecha desconocida';
             if (comentario.fecha) {
                 try {
@@ -1513,8 +1606,7 @@
                     if (!isNaN(fecha.getTime())) {
                         fechaFormateada = fecha.toLocaleDateString('es-AR', { 
                             day: '2-digit', 
-                            month: 'long', 
-                            year: 'numeric',
+                            month: 'long',
                             hour: '2-digit',
                             minute: '2-digit'
                         });
@@ -1524,37 +1616,71 @@
                 }
             }
             
-            // Validar datos del comentario
             const autor = comentario.autor || 'Anónimo';
             const texto = comentario.comentario || 'Sin comentario';
             
-            // Aplicar fade out
-            container.style.opacity = '0';
+            // Reacciones
+            const reacciones = comentario.reacciones || {};
+            const emojisDisponibles = ['👍', '❤️', '🔥', '⚽'];
             
-            setTimeout(() => {
-                container.innerHTML = `
-                    <div class="glass rounded-xl p-4 sm:p-5 border-l-4 border-green-500">
-                        <p class="text-sm sm:text-base text-white leading-relaxed mb-4 italic">"${texto}"</p>
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-xs sm:text-sm font-bold text-green-400">- ${autor}</p>
-                                <p class="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wide mt-1">${fechaFormateada}</p>
-                            </div>
-                            ${adminAutenticado ? `
-                                <button onclick="eliminarComentario(${comentario.id})" class="text-red-400 hover:text-red-300 text-xs">
-                                    🗑️
-                                </button>
-                            ` : ''}
+            let reaccionesHTML = '<div class="flex gap-2 flex-wrap mt-2">';
+            emojisDisponibles.forEach(emoji => {
+                const count = reacciones[emoji] || 0;
+                reaccionesHTML += `
+                    <button onclick="darReaccion(${comentario.id}, '${emoji}')" 
+                            class="glass px-2 py-1 rounded-lg hover:bg-white/20 transition-all text-xs flex items-center gap-1">
+                        ${emoji} ${count > 0 ? count : ''}
+                    </button>
+                `;
+            });
+            reaccionesHTML += '</div>';
+            
+            const tamano = esRespuesta ? 'text-xs sm:text-sm' : 'text-sm sm:text-base';
+            const padding = esRespuesta ? 'p-3' : 'p-4 sm:p-5';
+            
+            return `
+                <div class="glass rounded-xl ${padding} border-l-4 ${esRespuesta ? 'border-blue-500' : 'border-green-500'}">
+                    <p class="${tamano} text-white leading-relaxed mb-2 italic">"${texto}"</p>
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex-1">
+                            <p class="text-xs font-bold ${esRespuesta ? 'text-blue-400' : 'text-green-400'}">- ${autor}</p>
+                            <p class="text-[10px] text-slate-500 uppercase tracking-wide mt-1">${fechaFormateada}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            ${!esRespuesta ? `<button onclick="responderComentario(${comentario.id}, '${autor}')" class="text-blue-400 hover:text-blue-300 text-xs whitespace-nowrap">💬 Responder</button>` : ''}
+                            ${adminAutenticado ? `<button onclick="eliminarComentario(${comentario.id})" class="text-red-400 hover:text-red-300 text-xs">🗑️</button>` : ''}
                         </div>
                     </div>
-                `;
+                    ${reaccionesHTML}
+                </div>
+            `;
+        }
+
+        async function darReaccion(comentarioId, emoji) {
+            try {
+                const formData = new URLSearchParams();
+                formData.append('accion', 'guardarReaccion');
+                formData.append('id', comentarioId);
+                formData.append('emoji', emoji);
                 
-                // Aplicar fade in
-                container.style.opacity = '1';
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
                 
-                // Actualizar indicador
-                document.getElementById('comentario-indicador').textContent = `${comentarioActualIndex + 1} / ${todosLosComentarios.length}`;
-            }, 300);
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Actualizar las reacciones localmente
+                    const comentario = todosLosComentarios.find(c => c.id == comentarioId);
+                    if (comentario) {
+                        comentario.reacciones = result.reacciones;
+                        mostrarComentarioActual();
+                    }
+                }
+            } catch (error) {
+                console.error('Error guardando reacción:', error);
+            }
         }
 
         function iniciarCarruselComentarios() {
