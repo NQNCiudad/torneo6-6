@@ -384,41 +384,40 @@
         <!-- Sección de Comentarios -->
         <div class="mt-8 sm:mt-12">
             <div class="text-center mb-6">
-                <h2 class="text-2xl sm:text-4xl font-black uppercase tracking-tight mb-2" style="font-family: 'Oswald';">
+                <h2 class="text-xl sm:text-3xl font-black uppercase tracking-tight mb-2" style="font-family: 'Oswald';">
                     💬 COMENTARIOS DE LA <span class="text-green-500">FECHA</span>
                 </h2>
-                <p class="text-slate-400 text-xs sm:text-sm uppercase tracking-wider">Dejá tu opinión del torneo</p>
-            </div>
-            
-            <!-- Formulario para comentar -->
-            <div class="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-6 max-w-2xl mx-auto">
-                <h3 class="text-lg font-bold mb-4 text-center">Dejá tu comentario</h3>
-                <div class="space-y-3">
-                    <input type="text" id="nombre-comentario" class="input-goles w-full" placeholder="Tu nombre" maxlength="50">
-                    <textarea id="texto-comentario" class="input-goles w-full h-24 resize-none" placeholder="Escribí tu comentario..." maxlength="300"></textarea>
-                    <button onclick="enviarComentario()" class="bg-green-500 hover:bg-green-600 px-6 py-3 rounded-xl font-bold text-sm w-full">
-                        💬 Enviar Comentario
-                    </button>
-                </div>
-                <p class="text-xs text-slate-400 mt-2 text-center">Máximo 300 caracteres</p>
+                <p class="text-slate-400 text-xs uppercase tracking-wider">Opiniones del torneo</p>
             </div>
             
             <!-- Carrusel de Comentarios -->
-            <div class="relative overflow-hidden max-w-3xl mx-auto">
+            <div class="relative overflow-hidden max-w-2xl mx-auto mb-6">
                 <div id="comentarios-carrusel" class="transition-opacity duration-1000 ease-in-out">
                     <!-- Se llena dinámicamente -->
                 </div>
                 
                 <!-- Indicadores de navegación -->
-                <div class="flex justify-center gap-2 mt-4">
-                    <button onclick="comentarioAnterior()" class="glass px-3 sm:px-4 py-2 rounded-xl hover:bg-white/10 transition-all text-xs sm:text-base">
+                <div class="flex justify-center gap-2 mt-3">
+                    <button onclick="comentarioAnterior()" class="glass px-3 py-2 rounded-lg hover:bg-white/10 transition-all text-xs">
                         ← Ant.
                     </button>
-                    <div id="comentario-indicador" class="glass px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold">
+                    <div id="comentario-indicador" class="glass px-3 py-2 rounded-lg text-xs font-bold">
                         0 / 0
                     </div>
-                    <button onclick="comentarioSiguiente()" class="glass px-3 sm:px-4 py-2 rounded-xl hover:bg-white/10 transition-all text-xs sm:text-base">
+                    <button onclick="comentarioSiguiente()" class="glass px-3 py-2 rounded-lg hover:bg-white/10 transition-all text-xs">
                         Sig. →
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Formulario para comentar (más compacto) -->
+            <div class="glass rounded-xl p-4 max-w-xl mx-auto">
+                <h3 class="text-sm font-bold mb-3 text-center">Dejá tu comentario</h3>
+                <div class="space-y-2">
+                    <input type="text" id="nombre-comentario" class="input-goles w-full text-sm py-2" placeholder="Tu nombre" maxlength="50">
+                    <textarea id="texto-comentario" class="input-goles w-full h-20 resize-none text-sm py-2" placeholder="Escribí tu comentario..." maxlength="300"></textarea>
+                    <button onclick="enviarComentario()" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-bold text-xs w-full">
+                        💬 Enviar
                     </button>
                 </div>
             </div>
@@ -1506,31 +1505,44 @@
             const comentario = todosLosComentarios[comentarioActualIndex];
             const container = document.getElementById('comentarios-carrusel');
             
-            const fecha = new Date(comentario.fecha);
-            const fechaFormateada = fecha.toLocaleDateString('es-AR', { 
-                day: '2-digit', 
-                month: 'long', 
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            // Manejar fecha con validación
+            let fechaFormateada = 'Fecha desconocida';
+            if (comentario.fecha) {
+                try {
+                    const fecha = new Date(comentario.fecha);
+                    if (!isNaN(fecha.getTime())) {
+                        fechaFormateada = fecha.toLocaleDateString('es-AR', { 
+                            day: '2-digit', 
+                            month: 'long', 
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                    }
+                } catch (e) {
+                    console.error('Error parseando fecha:', e);
+                }
+            }
+            
+            // Validar datos del comentario
+            const autor = comentario.autor || 'Anónimo';
+            const texto = comentario.comentario || 'Sin comentario';
             
             // Aplicar fade out
             container.style.opacity = '0';
             
             setTimeout(() => {
                 container.innerHTML = `
-                    <div class="glass rounded-xl sm:rounded-2xl p-6 sm:p-8 border-l-4 border-green-500">
-                        <div class="text-4xl sm:text-5xl text-green-500 mb-4">"</div>
-                        <p class="text-base sm:text-lg text-white leading-relaxed mb-6 italic">${comentario.comentario}</p>
+                    <div class="glass rounded-xl p-4 sm:p-5 border-l-4 border-green-500">
+                        <p class="text-sm sm:text-base text-white leading-relaxed mb-4 italic">"${texto}"</p>
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm sm:text-base font-bold text-green-400">- ${comentario.autor}</p>
-                                <p class="text-xs text-slate-500 uppercase tracking-wide mt-1">${fechaFormateada}</p>
+                                <p class="text-xs sm:text-sm font-bold text-green-400">- ${autor}</p>
+                                <p class="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wide mt-1">${fechaFormateada}</p>
                             </div>
                             ${adminAutenticado ? `
-                                <button onclick="eliminarComentario(${comentario.id})" class="text-red-400 hover:text-red-300 text-sm">
-                                    🗑️ Eliminar
+                                <button onclick="eliminarComentario(${comentario.id})" class="text-red-400 hover:text-red-300 text-xs">
+                                    🗑️
                                 </button>
                             ` : ''}
                         </div>
