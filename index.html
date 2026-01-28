@@ -148,16 +148,6 @@
             </div>
         </div>
 
-        <!-- Botones Admin y Debug (esquina inferior derecha) -->
-        <div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-            <button onclick="mostrarDebugNoticias()" class="bg-purple-600/80 hover:bg-purple-700 px-2 py-2 rounded-lg font-bold text-xs text-white shadow-lg">
-                🐛
-            </button>
-            <button onclick="toggleAdmin()" class="btn-admin px-2 py-2 rounded-lg font-bold text-xs text-white shadow-lg">
-                🔐
-            </button>
-        </div>
-
         <!-- Stream en Vivo - Mini banner que abre link -->
         <div id="stream-banner" class="hidden fixed top-4 right-4 z-40">
             <a id="stream-link" href="#" target="_blank" rel="noopener noreferrer" class="glass rounded-lg px-3 py-2 border-2 border-red-500 hover:scale-105 transition-transform shadow-xl flex items-center gap-2 no-underline">
@@ -510,6 +500,13 @@
             </div>
         </div>
         </div>
+    </div>
+
+    <!-- Botón Admin al final de todo -->
+    <div class="w-full py-8 flex justify-center bg-gradient-to-t from-slate-900/50 to-transparent">
+        <button onclick="toggleAdmin()" class="bg-slate-800/30 hover:bg-slate-700/50 backdrop-blur-sm px-4 py-2 rounded-full font-bold text-xs text-slate-400 hover:text-slate-300 shadow-lg transition-all">
+            🔐 Admin
+        </button>
     </div>
 
     <script>
