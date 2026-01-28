@@ -160,14 +160,15 @@
 
         <!-- Stream en Vivo - Mini banner que abre link -->
         <div id="stream-banner" class="hidden fixed top-4 right-4 z-40">
-            <a id="stream-link" href="#" target="_blank" rel="noopener noreferrer" class="glass rounded-lg px-4 py-2 border-2 border-red-500 hover:scale-105 transition-transform shadow-xl flex items-center gap-2 no-underline">
+            <a id="stream-link" href="#" target="_blank" rel="noopener noreferrer" class="glass rounded-lg px-3 py-2 border-2 border-red-500 hover:scale-105 transition-transform shadow-xl flex items-center gap-2 no-underline">
                 <span class="relative flex h-2 w-2">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                 </span>
                 <div class="flex flex-col">
-                    <span class="text-white font-bold text-xs uppercase">🔴 EN VIVO</span>
-                    <span id="stream-titulo-banner" class="text-white/80 text-[10px]"></span>
+                    <span class="text-white font-bold text-[11px] uppercase">🔴 EN VIVO</span>
+                    <span id="stream-titulo-banner" class="text-white/90 text-[10px] font-semibold"></span>
+                    <span id="stream-countdown" class="text-green-400 font-mono text-[9px] font-bold"></span>
                 </div>
             </a>
         </div>
@@ -307,6 +308,12 @@
                         <div>
                             <label class="text-xs text-slate-300 mb-1 block">Descripción (opcional):</label>
                             <input type="text" id="stream-descripcion-input" class="input-goles w-full text-xs" placeholder="Ej: Partido decisivo del torneo">
+                        </div>
+                        
+                        <div>
+                            <label class="text-xs text-slate-300 mb-1 block">Fecha y Hora del Partido (opcional):</label>
+                            <input type="text" id="stream-fecha-hora-input" class="input-goles w-full text-xs" placeholder="Dejar vacío para cálculo automático">
+                            <p class="text-[10px] text-slate-400 mt-1">💡 Si está vacío, se calcula desde el próximo partido (miércoles 20:00)</p>
                         </div>
                         
                         <button onclick="guardarStream()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-xl font-bold text-xs w-full">
@@ -1831,6 +1838,7 @@
                 }
 
                 datosActuales = datos;
+                console.log('✅ Datos cargados exitosamente, total partidos:', datosActuales.length);
                 
                 if (vistaActual === 'tabla') {
                     generarTabla();
@@ -1839,6 +1847,9 @@
                 } else {
                     mostrarPartidos();
                 }
+                
+                // Cargar stream DESPUÉS de que los datos estén disponibles
+                cargarStream();
             } catch (error) {
                 console.error('Error cargando datos:', error);
                 
@@ -1871,16 +1882,30 @@
         // ===== FUNCIONES DE STREAM =====
         
         let streamData = null;
+        let countdownInterval = null;
         
         async function cargarStream() {
             try {
                 const response = await fetch(API_URL + '?accion=obtenerStream&t=' + new Date().getTime());
                 const stream = await response.json();
                 
+                console.log('Stream recibido:', stream);
+                
                 if (stream.activo && stream.url) {
                     streamData = stream;
+                    
+                    // Si no hay fecha_hora configurada O está vacía, calcular automáticamente del próximo partido
+                    if (!stream.fecha_hora || stream.fecha_hora === '' || stream.fecha_hora.trim() === '') {
+                        console.log('No hay fecha_hora configurada, calculando automáticamente...');
+                        stream.fecha_hora = calcularFechaProximoPartido();
+                        console.log('Fecha calculada:', stream.fecha_hora);
+                    } else {
+                        console.log('Usando fecha_hora configurada:', stream.fecha_hora);
+                    }
+                    
                     mostrarBannerStream(stream);
                 } else {
+                    console.log('Stream no activo o sin URL');
                     ocultarBannerStream();
                 }
                 
@@ -1894,19 +1919,195 @@
             }
         }
 
+        function calcularFechaProximoPartido() {
+            // Buscar el próximo partido en los datos actuales
+            if (!datosActuales || datosActuales.length === 0) {
+                console.log('No hay datosActuales disponibles');
+                return null;
+            }
+            
+            console.log('Buscando próximo partido en', datosActuales.length, 'partidos');
+            
+            // Buscar primer partido sin resultado
+            // Soportar tanto golesLocal/golesVisita como GolesL/GolesV
+            const proximoPartido = datosActuales.find(partido => {
+                const golesL = partido.golesLocal || partido.GolesL;
+                const golesV = partido.golesVisita || partido.GolesV;
+                const sinResultado = (!golesL && !golesV) || (golesL === '' && golesV === '');
+                
+                const local = partido.local || partido.Local;
+                const visitante = partido.visitante || partido.Visitante;
+                
+                console.log('Partido:', local, 'vs', visitante, 'GolesL:', golesL, 'GolesV:', golesV, 'Sin resultado:', sinResultado);
+                return sinResultado;
+            });
+            
+            if (!proximoPartido) {
+                console.log('No se encontró próximo partido sin resultado');
+                return null;
+            }
+            
+            const fechaPartido = proximoPartido.fecha || proximoPartido.Fecha;
+            const local = proximoPartido.local || proximoPartido.Local;
+            const visitante = proximoPartido.visitante || proximoPartido.Visitante;
+            
+            if (!fechaPartido) {
+                console.log('El próximo partido no tiene fecha');
+                return null;
+            }
+            
+            console.log('Próximo partido encontrado:', local, 'vs', visitante, 'Fecha:', fechaPartido);
+            
+            // Parsear la fecha
+            let dia, mes, anio;
+            
+            console.log('Tipo de fechaPartido:', typeof fechaPartido, 'Es Date?:', fechaPartido instanceof Date);
+            
+            // Si es un string con formato ISO (ej: "2026-01-28T03:00:00.000Z")
+            if (typeof fechaPartido === 'string' && fechaPartido.includes('T')) {
+                const fecha = new Date(fechaPartido);
+                dia = fecha.getDate();
+                mes = fecha.getMonth() + 1;
+                anio = fecha.getFullYear();
+            }
+            // Si tiene formato "mié 28/01"
+            else if (typeof fechaPartido === 'string' && fechaPartido.includes(' ') && fechaPartido.includes('/')) {
+                const partes = fechaPartido.split(' ')[1].split('/');
+                dia = parseInt(partes[0]);
+                mes = parseInt(partes[1]);
+                anio = new Date().getFullYear();
+            }
+            // Si tiene formato "28/01/2026" o "28/01"
+            else if (typeof fechaPartido === 'string' && fechaPartido.includes('/')) {
+                const partes = fechaPartido.split('/');
+                dia = parseInt(partes[0]);
+                mes = parseInt(partes[1]);
+                anio = partes[2] ? parseInt(partes[2]) : new Date().getFullYear();
+            }
+            // Si es un Date object
+            else if (fechaPartido instanceof Date) {
+                dia = fechaPartido.getDate();
+                mes = fechaPartido.getMonth() + 1;
+                anio = fechaPartido.getFullYear();
+            }
+            else {
+                console.log('Formato de fecha no reconocido:', fechaPartido);
+                return null;
+            }
+            
+            console.log('Valores extraídos:', {dia, mes, anio});
+            
+            // Asegurar que dia y mes sean strings con 2 dígitos
+            const diaStr = String(dia).padStart(2, '0');
+            const mesStr = String(mes).padStart(2, '0');
+            
+            // Crear fecha con hora 20:00 (siempre miércoles a las 20:00)
+            const fechaCalc = `${anio}-${mesStr}-${diaStr} 20:00`;
+            
+            console.log('Fecha calculada:', fechaCalc);
+            
+            return fechaCalc;
+        }
+
         function mostrarBannerStream(stream) {
+            console.log('=== MOSTRAR BANNER STREAM ===');
+            console.log('Stream completo:', stream);
+            
             const banner = document.getElementById('stream-banner');
             const link = document.getElementById('stream-link');
             const titulo = document.getElementById('stream-titulo-banner');
+            const countdown = document.getElementById('stream-countdown');
+            
+            console.log('Elementos encontrados:', {
+                banner: !!banner,
+                link: !!link,
+                titulo: !!titulo,
+                countdown: !!countdown
+            });
             
             if (stream.url) {
+                console.log('Stream tiene URL:', stream.url);
                 link.href = stream.url;
                 titulo.textContent = stream.titulo || '';
                 banner.classList.remove('hidden');
+                console.log('Banner mostrado');
+                
+                // Iniciar contador si hay fecha_hora
+                if (stream.fecha_hora) {
+                    console.log('Iniciando contador con fecha_hora:', stream.fecha_hora);
+                    iniciarContador(stream.fecha_hora, countdown);
+                } else {
+                    console.log('No hay fecha_hora, contador vacío');
+                    countdown.textContent = '';
+                }
+            } else {
+                console.log('Stream NO tiene URL, no se muestra banner');
             }
         }
 
+        function iniciarContador(fechaHoraStr, elemento) {
+            // Limpiar intervalo anterior si existe
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            console.log('=== INICIANDO CONTADOR ===');
+            console.log('fechaHoraStr recibido:', fechaHoraStr, 'tipo:', typeof fechaHoraStr);
+            
+            // Parsear fecha (formato: "2026-02-01 20:00")
+            const [fecha, hora] = fechaHoraStr.split(' ');
+            console.log('Fecha:', fecha, 'Hora:', hora);
+            
+            const [year, month, day] = fecha.split('-').map(Number);
+            const [hours, minutes] = hora.split(':').map(Number);
+            
+            console.log('Valores parseados:', {year, month, day, hours, minutes});
+            
+            const fechaPartido = new Date(year, month - 1, day, hours, minutes);
+            
+            console.log('fechaPartido creada:', fechaPartido);
+            console.log('fechaPartido.getTime():', fechaPartido.getTime());
+            
+            function actualizarContador() {
+                const ahora = new Date();
+                const diferencia = fechaPartido - ahora;
+                
+                if (diferencia <= 0) {
+                    elemento.textContent = '⚽ ¡COMENZÓ!';
+                    clearInterval(countdownInterval);
+                    return;
+                }
+                
+                const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
+                const horas = Math.floor((diferencia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutos = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60));
+                const segundos = Math.floor((diferencia % (1000 * 60)) / 1000);
+                
+                let texto = '⏱️ ';
+                if (dias > 0) {
+                    texto += `${dias}d ${horas}h ${minutos}m`;
+                } else if (horas > 0) {
+                    texto += `${horas}h ${minutos}m ${segundos}s`;
+                } else if (minutos > 0) {
+                    texto += `${minutos}m ${segundos}s`;
+                } else {
+                    texto += `${segundos}s`;
+                }
+                
+                elemento.textContent = texto;
+            }
+            
+            // Actualizar inmediatamente
+            actualizarContador();
+            
+            // Actualizar cada segundo
+            countdownInterval = setInterval(actualizarContador, 1000);
+        }
+
         function ocultarBannerStream() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
             document.getElementById('stream-banner').classList.add('hidden');
         }
 
@@ -1949,6 +2150,7 @@
             const url = document.getElementById('stream-url').value.trim();
             const titulo = document.getElementById('stream-titulo-input').value.trim();
             const descripcion = document.getElementById('stream-descripcion-input').value.trim();
+            const fechaHora = document.getElementById('stream-fecha-hora-input').value.trim();
             
             if (activo && !url) {
                 alert('❌ Debes ingresar la URL del stream');
@@ -1962,6 +2164,12 @@
                 formData.append('url', url);
                 formData.append('titulo', titulo);
                 formData.append('descripcion', descripcion);
+                
+                // Solo enviar fecha_hora si realmente tiene algo
+                // Si está vacío, enviar string vacío para que se calcule automáticamente
+                formData.append('fecha_hora', fechaHora || '');
+                
+                console.log('Guardando stream con fecha_hora:', fechaHora || '(vacío - se calculará automáticamente)');
                 
                 const response = await fetch(API_URL, {
                     method: 'POST',
@@ -2015,6 +2223,7 @@
             document.getElementById('stream-url').value = stream.url || '';
             document.getElementById('stream-titulo-input').value = stream.titulo || '';
             document.getElementById('stream-descripcion-input').value = stream.descripcion || '';
+            document.getElementById('stream-fecha-hora-input').value = stream.fecha_hora || '';
         }
 
         // ===== FIN FUNCIONES DE STREAM =====
@@ -2385,15 +2594,15 @@
         cambiarTorneo('Apertura');
         cambiarVista('goleadores'); // Empezar en goleadores para evitar bloqueo
         
-        // Cargar jugadores, noticias, comentarios y stream
+        // Cargar jugadores, noticias, comentarios
         cargarJugadoresCustom();
         mostrarNoticias();
         mostrarComentarios();
-        cargarStream(); // Cargar stream en vivo
         
         // Después de que todo cargó, cambiar a próxima fecha
         setTimeout(() => {
             cambiarVista('proxima');
+            // El stream se cargará automáticamente cuando cargarDatos() termine
         }, 500);
         
         // Preview de imagen al seleccionar archivo
