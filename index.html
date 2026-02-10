@@ -152,6 +152,115 @@
             100% { transform: rotate(360deg); }
         }
         
+        /* Mini reproductor del partido flotante */
+        #mini-stream {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 90;
+            width: 320px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            border: 2px solid #ef4444;
+            transition: all 0.3s ease;
+        }
+        
+        #mini-stream.minimized {
+            width: 60px;
+            height: 60px;
+        }
+        
+        #mini-stream.minimized .mini-stream-header,
+        #mini-stream.minimized .mini-stream-video {
+            display: none;
+        }
+        
+        .mini-stream-header {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .mini-stream-title {
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .mini-stream-controls {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .mini-stream-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .mini-stream-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .mini-stream-video {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            background: #000;
+        }
+        
+        .mini-stream-video iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .mini-toggle-btn {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+        }
+        
+        .mini-toggle-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        @media (max-width: 640px) {
+            #mini-stream {
+                width: 280px;
+                bottom: 10px;
+                right: 10px;
+            }
+        }
+        
         /* Animaciones de entrada */
         @keyframes fadeInUp {
             from {
@@ -216,19 +325,24 @@
             </div>
         </div>
 
-        <!-- Stream en Vivo - Mini banner que abre link -->
+        <!-- Stream en Vivo - Mini banner informativo -->
         <div id="stream-banner" class="hidden fixed top-4 right-4 z-40">
-            <a id="stream-link" href="#" target="_blank" rel="noopener noreferrer" class="glass rounded-lg px-3 py-2 border-2 border-red-500 hover:scale-105 transition-transform shadow-xl flex items-center gap-2 no-underline">
-                <span class="relative flex h-2 w-2">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                </span>
-                <div class="flex flex-col">
-                    <span class="text-white font-bold text-[11px] uppercase">🔴 EN VIVO</span>
-                    <span id="stream-titulo-banner" class="text-white/90 text-[10px] font-semibold"></span>
-                    <span id="stream-countdown" class="text-green-400 font-mono text-[9px] font-bold"></span>
+            <div class="glass rounded-lg px-3 py-2 border-2 border-red-500 shadow-xl">
+                <div class="flex items-center gap-2">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                    <div class="flex flex-col">
+                        <span class="text-white font-bold text-[11px] uppercase">🔴 EN VIVO</span>
+                        <span id="stream-titulo-banner" class="text-white/90 text-[10px] font-semibold"></span>
+                        <span id="stream-countdown" class="text-green-400 font-mono text-[9px] font-bold"></span>
+                    </div>
+                    <button onclick="expandirMiniStream()" class="ml-2 text-white/80 hover:text-white text-xs">
+                        📺
+                    </button>
                 </div>
-            </a>
+            </div>
         </div>
 
         <!-- Panel de Administración -->
@@ -567,6 +681,33 @@
                 </div>
             </div>
         </div>
+        </div>
+    </div>
+
+    <!-- Mini reproductor del partido en vivo -->
+    <div id="mini-stream" class="hidden minimized">
+        <div class="mini-toggle-btn" onclick="toggleMiniStream()">
+            🔴
+        </div>
+        <div class="mini-stream-header">
+            <div class="mini-stream-title">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                </span>
+                <span id="mini-stream-title-text">EN VIVO</span>
+            </div>
+            <div class="mini-stream-controls">
+                <button class="mini-stream-btn" onclick="toggleMiniStream()" title="Minimizar">−</button>
+                <button class="mini-stream-btn" onclick="cerrarMiniStream()" title="Cerrar">✕</button>
+            </div>
+        </div>
+        <div class="mini-stream-video">
+            <iframe id="mini-stream-iframe" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+            </iframe>
         </div>
     </div>
 
@@ -2164,23 +2305,23 @@
             console.log('Stream completo:', stream);
             
             const banner = document.getElementById('stream-banner');
-            const link = document.getElementById('stream-link');
             const titulo = document.getElementById('stream-titulo-banner');
             const countdown = document.getElementById('stream-countdown');
             
             console.log('Elementos encontrados:', {
                 banner: !!banner,
-                link: !!link,
                 titulo: !!titulo,
                 countdown: !!countdown
             });
             
             if (stream.url) {
                 console.log('Stream tiene URL:', stream.url);
-                link.href = stream.url;
                 titulo.textContent = stream.titulo || '';
                 banner.classList.remove('hidden');
                 console.log('Banner mostrado');
+                
+                // Activar mini reproductor
+                activarMiniStream(stream.url, stream.titulo);
                 
                 // Iniciar contador si hay fecha_hora
                 if (stream.fecha_hora) {
@@ -2193,6 +2334,11 @@
             } else {
                 console.log('Stream NO tiene URL, no se muestra banner');
             }
+        }
+        
+        function expandirMiniStream() {
+            const miniStream = document.getElementById('mini-stream');
+            miniStream.classList.remove('minimized');
         }
 
         function iniciarContador(fechaHoraStr, elemento) {
@@ -2766,6 +2912,133 @@
                 loadingScreen.classList.add('hidden');
             }
         }, 2000);
+        
+        // Funciones del mini reproductor
+        function convertirAEmbedURL(url) {
+            // YouTube - mejorado
+            if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                let videoId = '';
+                
+                // URL corta: youtu.be/VIDEO_ID
+                if (url.includes('youtu.be/')) {
+                    videoId = url.split('youtu.be/')[1].split('?')[0].split('&')[0];
+                }
+                // URL normal: youtube.com/watch?v=VIDEO_ID
+                else if (url.includes('watch?v=')) {
+                    videoId = url.split('watch?v=')[1].split('&')[0];
+                }
+                // URL de live: youtube.com/live/VIDEO_ID
+                else if (url.includes('/live/')) {
+                    videoId = url.split('/live/')[1].split('?')[0].split('&')[0];
+                }
+                
+                if (videoId) {
+                    // Para videos en vivo, necesitamos diferentes parámetros
+                    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&enablejsapi=1`;
+                }
+            }
+            
+            // Twitch
+            if (url.includes('twitch.tv')) {
+                const channel = url.split('twitch.tv/')[1].split('?')[0].split('/')[0];
+                // Para Twitch necesitamos el parent correcto
+                const parent = window.location.hostname || 'localhost';
+                return `https://player.twitch.tv/?channel=${channel}&parent=${parent}&autoplay=true&muted=false`;
+            }
+            
+            // Facebook
+            if (url.includes('facebook.com') || url.includes('fb.watch')) {
+                return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&autoplay=true&muted=false`;
+            }
+            
+            // Instagram Live
+            if (url.includes('instagram.com')) {
+                // Instagram no permite embeds de lives, abrir en nueva pestaña
+                window.open(url, '_blank');
+                return '';
+            }
+            
+            // Si no se reconoce, devolver la URL original
+            return url;
+        }
+        
+        function activarMiniStream(url, titulo) {
+            const miniStream = document.getElementById('mini-stream');
+            const iframe = document.getElementById('mini-stream-iframe');
+            const tituloText = document.getElementById('mini-stream-title-text');
+            
+            tituloText.textContent = titulo || 'PARTIDO EN VIVO';
+            
+            // Si es YouTube, cambiar el comportamiento
+            if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                // En lugar de embed, mostrar botón para abrir en nueva pestaña
+                const miniStreamVideo = miniStream.querySelector('.mini-stream-video');
+                miniStreamVideo.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 180px; background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📺</div>
+                        <a href="${url}" target="_blank" rel="noopener noreferrer" 
+                           style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); 
+                                  color: white; 
+                                  padding: 12px 24px; 
+                                  border-radius: 8px; 
+                                  text-decoration: none; 
+                                  font-weight: bold;
+                                  font-size: 14px;
+                                  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+                                  transition: all 0.2s;">
+                            ▶️ VER EN YOUTUBE
+                        </a>
+                        <p style="margin-top: 12px; font-size: 11px; color: #999; text-align: center; padding: 0 20px;">
+                            YouTube no permite reproducción embebida
+                        </p>
+                    </div>
+                `;
+            } else {
+                // Para otros servicios, intentar embed
+                const embedURL = convertirAEmbedURL(url);
+                if (embedURL) {
+                    iframe.src = embedURL;
+                } else {
+                    // Si no hay embed disponible, mostrar botón
+                    const miniStreamVideo = miniStream.querySelector('.mini-stream-video');
+                    miniStreamVideo.innerHTML = `
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 180px; background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);">
+                            <div style="font-size: 48px; margin-bottom: 16px;">📺</div>
+                            <a href="${url}" target="_blank" rel="noopener noreferrer" 
+                               style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); 
+                                      color: white; 
+                                      padding: 12px 24px; 
+                                      border-radius: 8px; 
+                                      text-decoration: none; 
+                                      font-weight: bold;
+                                      font-size: 14px;
+                                      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">
+                                ▶️ VER TRANSMISIÓN
+                            </a>
+                        </div>
+                    `;
+                }
+            }
+            
+            miniStream.classList.remove('hidden');
+            // Empezar minimizado
+            miniStream.classList.add('minimized');
+        }
+        
+        function toggleMiniStream() {
+            const miniStream = document.getElementById('mini-stream');
+            miniStream.classList.toggle('minimized');
+        }
+        
+        function cerrarMiniStream() {
+            const miniStream = document.getElementById('mini-stream');
+            const iframe = document.getElementById('mini-stream-iframe');
+            
+            miniStream.classList.add('hidden');
+            iframe.src = ''; // Detener video
+        }
+        
+        // Función para minimizar/maximizar reproductor de música
         
         // Preview de imagen al seleccionar archivo
         setTimeout(() => {
